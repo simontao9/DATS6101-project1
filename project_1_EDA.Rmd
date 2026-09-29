@@ -1,0 +1,60 @@
+---
+title: "Project EDA"
+author: "Savannah Sauers, Lera Martinez, Simon Tao"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+```{r, include=FALSE}
+project <- read.csv("DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+```
+
+```{r}
+# Make sure columns are cast to correct types
+project$borough <- as.factor(project$borough)
+project$payment_method <- as.factor(project$payment_method)
+project$fare_class_category <- as.factor(project$fare_class_category)
+project$ridership <- as.numeric(project$ridership)
+project$transfers <- as.numeric(project$transfers)
+```
+
+```{r}
+head(project)
+str(project)
+```
+
+## EDA
+```{r}
+# Week average ridership by borough, for all stations
+borough_ridership_means <- project %>%
+  group_by(borough) %>%
+  summarize(mean_ridership = mean(ridership, na.rm=TRUE))
+
+borough_ridership_means
+```
+
+```{r}
+# Week average ridership by station and borough
+station_ridership_means <- project %>%
+  group_by(borough, station_complex_id) %>%
+  summarize(mean_ridership = mean(ridership, na.rm=TRUE)) %>%
+  arrange(desc(mean_ridership))
+
+station_ridership_means
+```
+
+## Hypothesis Testing
+Two-sample t-test
+- We do not know our population standard deviation
+- Heavily right skewed, but sample size is large enough
+
+ANOVA test
+- Comparing mean ridership between 4 boroughs
