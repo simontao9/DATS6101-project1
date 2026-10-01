@@ -14,7 +14,7 @@ library(tidyverse)
 ```
 
 ```{r, include=FALSE}
-project <- read.csv("DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
 
 ```{r}
@@ -31,24 +31,51 @@ head(project)
 str(project)
 ```
 
+## Clean Data (create columns that will be used for our analysis)
+- Morning, afternoon, evening
+- Day of the week
+
 ## EDA
 ```{r}
-# Week average ridership by borough, for all stations
+length(unique(project$station_complex_id))
+```
+
+There are 424 stations in the dataset.
+
+```{r}
+# Week average for total ridership by borough
 borough_ridership_means <- project %>%
+  group_by(borough, transit_timestamp) %>%
+  summarize(hourly_ridership = sum(ridership, na.rm=TRUE), .groups = "drop") %>%
   group_by(borough) %>%
-  summarize(mean_ridership = mean(ridership, na.rm=TRUE))
+  summarize(mean_week_ridership = mean(hourly_ridership, na.rm=TRUE))
 
 borough_ridership_means
 ```
 
+Greatest to least mean total ridership by borough: Manhattan, Brooklyn, Queens, Bronx
+
+This shows the average number of riders in each borough. Includes all stations and times of day.
+
 ```{r}
-# Week average ridership by station and borough
+# Week average hourly ridership by station and borough
 station_ridership_means <- project %>%
   group_by(borough, station_complex_id) %>%
   summarize(mean_ridership = mean(ridership, na.rm=TRUE)) %>%
   arrange(desc(mean_ridership))
 
 station_ridership_means
+```
+
+Out of the top 10 stations for mean ridership, 7 of them are in Manhattan, 2 of them are in Queens, and 1 of them is in Brooklyn
+
+```{r}
+scatter <- project %>%
+  ggplot(aes(x=ridership, y=transfers, color=borough)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+scatter
 ```
 
 ## Hypothesis Testing
