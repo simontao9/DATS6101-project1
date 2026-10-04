@@ -32,8 +32,41 @@ str(project)
 ```
 
 ## Clean Data (create columns that will be used for our analysis)
-- Morning, afternoon, evening
-- Day of the week
+```{r}
+# Add 24-hour time column
+project <- project %>%
+  mutate(
+    timestamp = mdy_hms(transit_timestamp),
+    hour = hour(timestamp)
+  )
+```
+
+```{r}
+# Add categories for morning, afternoon, evening, night
+# Morning (5am - noon), afternoon (noon - 4pm), evening (4pm - 8pm), night (8pm - 5am)
+project <- project %>%
+  mutate(
+    time_of_day = case_when(
+      hour >= 5 & hour < 12 ~ "Morning",
+      hour >= 12 & hour < 16 ~ "Afternoon",
+      hour >= 16 & hour < 20 ~ "Evening",
+      TRUE ~ "Night"
+    )
+  )
+```
+
+
+```{r}
+# Add day of week column
+project <- project %>%
+  mutate(
+    day_of_week = wday(timestamp, label = TRUE)
+  )
+```
+
+```{r}
+head(project)
+```
 
 ## EDA
 ```{r}
@@ -67,12 +100,11 @@ station_ridership_means <- project %>%
 station_ridership_means
 ```
 
-Out of the top 10 stations for mean ridership, 7 of them are in Manhattan, 2 of them are in Queens, and 1 of them is in Brooklyn
+Out of the top 10 stations for mean hourly ridership, 7 of them are in Manhattan, 2 of them are in Queens, and 1 of them is in Brooklyn
 
 ```{r}
 scatter <- project %>%
   ggplot(aes(x=ridership, y=transfers, color=borough)) +
-  geom_point() +
   geom_smooth(method = "lm")
 
 scatter
