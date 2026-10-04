@@ -115,5 +115,24 @@ Two-sample t-test
 - We do not know our population standard deviation
 - Heavily right skewed, but sample size is large enough
 
-ANOVA test
-- Comparing mean ridership between 4 boroughs
+# ANOVA: Differences in ridership between time-of-day categories
+
+# ANOVA: Differences in hourly ridership between boroughs
+```{r}
+# Daily ridership total for each borough
+borough_daily <- project %>%
+  mutate(date = as.Date(timestamp)) %>%
+  group_by(date, borough) %>%
+  summarize(total_ridership = sum(ridership, na.rm = TRUE), .groups = "drop")
+```
+
+```{r}
+# ANOVA test: Do daily averages in each borough differ?
+borough_anova <- aov(total_ridership ~ borough, data = borough_daily)
+summary(borough_anova)
+```
+
+```{r}
+borough_post_hoc <- TukeyHSD(borough_anova)
+borough_post_hoc
+```
