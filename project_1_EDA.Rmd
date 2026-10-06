@@ -47,9 +47,9 @@ project <- project %>%
 project <- project %>%
   mutate(
     time_of_day = case_when(
-      hour >= 5 & hour < 12 ~ "Morning",
-      hour >= 12 & hour < 16 ~ "Afternoon",
-      hour >= 16 & hour < 20 ~ "Evening",
+      hour >= 5 & hour < 11 ~ "Morning",
+      hour >= 11 & hour < 16 ~ "Mid Day",
+      hour >= 16 & hour < 21 ~ "Evening",
       TRUE ~ "Night"
     )
   )
@@ -116,6 +116,24 @@ Two-sample t-test
 - Heavily right skewed, but sample size is large enough
 
 # ANOVA: Differences in ridership between time-of-day categories
+```{r}
+time_category <- project %>%
+  group_by(timestamp, time_of_day) %>%
+  summarize(
+    total_ridership = sum(ridership, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+```{r}
+time_anova <- aov(total_ridership ~ time_of_day, data = time_category)
+summary(time_anova)
+```
+
+```{r}
+time_post_hoc <- TukeyHSD(time_anova)
+time_post_hoc
+```
 
 # ANOVA: Differences in hourly ridership between boroughs
 ```{r}
@@ -136,10 +154,11 @@ summary(borough_anova)
 borough_post_hoc <- TukeyHSD(borough_anova)
 borough_post_hoc
 ```
+
 #Transfers EDA, total and average bus to station transfers
-```{r}
+```{r, message=FALSE}
 project %>%
-  group_by(station_complex) %>%
+  group_by(station_complex, station_complex_id) %>%
   summarize(
     total_transfers = sum(transfers, na.rm = TRUE),
     average_transfers = mean(transfers, na.rm = TRUE),
@@ -147,15 +166,20 @@ project %>%
   ) %>%
   arrange(desc(total_transfers))
 ```
+
 ```{r}
 top_transfer_stations <- project %>%
-  group_by(station_complex) %>%
+  group_by(station_complex_id, borough) %>%
   summarize(
-    total_transfers = sum(transfers, na.rm = TRUE)
+    total_transfers = sum(transfers, na.rm = TRUE),
+    .groups = "drop"
   ) %>%
   arrange(desc(total_transfers)) %>%
   slice_head(n = 10)
 
-ggplot(top_transfer_stations, aes(x = reorder(station_complex, total_transfers), y = total_transfers)) + geom_col()
+ggplot(top_transfer_stations, aes(x = reorder(station_complex_id, total_transfers), y = total_transfers, fill = borough)) + geom_col()
 ```
+
 The top five total transfer stations are Flushing-Main St (7), Jamaica Center-Parsons/Archer (E,J,Z), Kew Gardens-Union Tpke (E,F), 74-Broadway (7)/Jackson Hts-Roosevelt Av (E,F,M,R), Jamaica-179 St (F). There is a drop in total transfers after the Jamaica-179 St.
+
+The five highest transfer stations for the week of Sept 15-21 are also located in Queens.
