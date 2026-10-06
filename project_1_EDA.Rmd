@@ -136,3 +136,26 @@ summary(borough_anova)
 borough_post_hoc <- TukeyHSD(borough_anova)
 borough_post_hoc
 ```
+#Transfers EDA, total and average bus to station transfers
+```{r}
+project %>%
+  group_by(station_complex) %>%
+  summarize(
+    total_transfers = sum(transfers, na.rm = TRUE),
+    average_transfers = mean(transfers, na.rm = TRUE),
+    observations = n()
+  ) %>%
+  arrange(desc(total_transfers))
+```
+```{r}
+top_transfer_stations <- project %>%
+  group_by(station_complex) %>%
+  summarize(
+    total_transfers = sum(transfers, na.rm = TRUE)
+  ) %>%
+  arrange(desc(total_transfers)) %>%
+  slice_head(n = 10)
+
+ggplot(top_transfer_stations, aes(x = reorder(station_complex, total_transfers), y = total_transfers)) + geom_col()
+```
+The top five total transfer stations are Flushing-Main St (7), Jamaica Center-Parsons/Archer (E,J,Z), Kew Gardens-Union Tpke (E,F), 74-Broadway (7)/Jackson Hts-Roosevelt Av (E,F,M,R), Jamaica-179 St (F). There is a drop in total transfers after the Jamaica-179 St.
