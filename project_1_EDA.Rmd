@@ -14,8 +14,10 @@ library(tidyverse)
 ```
 
 ```{r, include=FALSE}
-project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
+
+
 
 ```{r}
 # Make sure columns are cast to correct types
@@ -24,6 +26,44 @@ project$payment_method <- as.factor(project$payment_method)
 project$fare_class_category <- as.factor(project$fare_class_category)
 project$ridership <- as.numeric(gsub(",", "", project$ridership))
 project$transfers <- as.numeric(gsub(",", "", project$transfers))
+```
+# Proofing data
+```{r Checking-Data}
+#Data exported corresponds to the week defined in the project
+range(project$timestamp, na.rm = TRUE)
+
+#Checking for any NA values
+colSums(is.na(project))
+
+#Checking for duplicates 
+sum(duplicated(project))
+
+```
+
+
+```{r 24h-Graph-prelim}
+#Using the mean, proposal/skeleton of potential graph that 
+#maps over the entire week the average ridership over a 24h period
+hourly_ridership <- project %>%
+  group_by(hour) %>%
+  summarize(
+    total_ridership = sum(ridership, na.rm = TRUE),
+    mean_ridership = mean(ridership, na.rm = TRUE),
+    sd_ridership = sd(ridership, na.rm = TRUE)
+  )
+
+day_mean_graph <- ggplot(hourly_ridership, aes(x = hour, y = mean_ridership)) +
+  geom_line(color = "#1A5276",linewidth = 1) +
+  geom_point(color = "#2980B9",size = 1) +
+  labs(
+    title = "Average NYC Subway Ridership by Hour",
+    x = "Hour of Day",
+    y = "Average Ridership"
+  ) +
+  theme_minimal()+ 
+  theme(panel.grid.minor = element_blank())
+
+day_mean_graph
 ```
 
 ```{r}
