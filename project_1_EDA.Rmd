@@ -55,7 +55,6 @@ project <- project %>%
   )
 ```
 
-
 ```{r}
 # Add day of week column
 project <- project %>%
@@ -65,7 +64,13 @@ project <- project %>%
 ```
 
 ```{r}
-head(project)
+# Weekend vs. Weekday column
+project <- project %>%
+  mutate(day_type = if_else(day_of_week %in% c("Sat", "Sun"), "Weekend", "Weekday"))
+```
+
+```{r}
+str(project)
 ```
 
 ## EDA
@@ -111,22 +116,77 @@ scatter
 ```
 
 ## Hypothesis Testing
-Two-sample t-test
-- We do not know our population standard deviation
-- Heavily right skewed, but sample size is large enough
+Questions of interest:
 
-# ANOVA: Differences in ridership between time-of-day categories
+- “How do NYC subway ridership volumes vary throughout the day during the week of September 15-21, 2024?” -- Anova and post hoc
+
+- Which hours have the highest ridership average (weekdays vs. weekends)? 
+
+- Do these hours correspond to commuting periods? 
+  
+**T-Tests: Commute vs. Non-commute; Weekday vs. Weekend**
 ```{r}
-time_category <- project %>%
-  group_by(timestamp, time_of_day) %>%
-  summarize(
-    total_ridership = sum(ridership, na.rm = TRUE),
-    .groups = "drop"
-  )
+hourly_ridership <- project %>%
+  mutate(commute_period = if_else(time_of_day %in% c("Morning", "Evening"), "Commute","Non-Commute")) %>%
+  group_by(timestamp, day_type, time_of_day, commute_period) %>%
+  summarize(total_ridership = sum(ridership, na.rm = TRUE), .groups = "drop")
+```
+
+Commute vs. Non-commute time periods:
+```{r}
+qqnorm(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Commute"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Commute"])
 ```
 
 ```{r}
-time_anova <- aov(total_ridership ~ time_of_day, data = time_category)
+qqnorm(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Non-Commute"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Non-Commute"])
+```
+
+Weekday vs. Weekend periods:
+```{r}
+qqnorm(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekday"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekday"])
+```
+
+```{r}
+qqnorm(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekend"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekend"])
+```
+
+Assumptions check for t-tests:
+
+- Commute vs. Non-commute time
+  - We do not know the population SD (we took a sample of a typical week with no holidays or off season periods)
+  - Sample size is large enough (per the CLT) for the test to be robust against normality violations
+  - Independent observation assumption may be violated due to time data, but continue with t-test for this class
+
+- Weekday vs. Weekend
+  - We do not know the population SD (we took a sample of a typical week with no holidays or off season periods)
+  - Sample size is large enough (per the CLT) for the test to be robust against normality violations
+  - Independent observation assumption may be violated due to time data, but continue with t-test for this class
+  
+```{r}
+# t-test for commute time vs. non-commute time means
+commute_period_test <- t.test(total_ridership ~ commute_period, data = hourly_ridership)
+commute_period_test
+```
+
+```{r}
+# t-test for weekday vs. weekend means
+weekday_weekend_test <- t.test(total_ridership ~ day_type, data = hourly_ridership)
+weekday_weekend_test
+```
+
+**ANOVA: Differences in ridership between time-of-day categories**
+
+ANOVA Assumptions Check:
+- Normality:
+- Homogeneity of variances:
+- Independence of errors:
+
+```{r}
+time_anova <- aov(total_ridership ~ time_of_day, data = hourly_ridership)
 summary(time_anova)
 ```
 
@@ -135,7 +195,13 @@ time_post_hoc <- TukeyHSD(time_anova)
 time_post_hoc
 ```
 
-# ANOVA: Differences in hourly ridership between boroughs
+**ANOVA: Differences in hourly ridership between boroughs**
+
+ANOVA Assumptions Check:
+- Normality:
+- Homogeneity of variances:
+- Independence of errors:
+
 ```{r}
 # Daily ridership total for each borough
 borough_daily <- project %>%
@@ -155,7 +221,7 @@ borough_post_hoc <- TukeyHSD(borough_anova)
 borough_post_hoc
 ```
 
-#Transfers EDA, total and average bus to station transfers
+# Transfers EDA, total and average bus to station transfers
 ```{r, message=FALSE}
 project %>%
   group_by(station_complex, station_complex_id) %>%
