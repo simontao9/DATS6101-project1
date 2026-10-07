@@ -22,8 +22,8 @@ project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Ho
 project$borough <- as.factor(project$borough)
 project$payment_method <- as.factor(project$payment_method)
 project$fare_class_category <- as.factor(project$fare_class_category)
-project$ridership <- as.numeric(project$ridership)
-project$transfers <- as.numeric(project$transfers)
+project$ridership <- as.numeric(gsub(",", "", project$ridership))
+project$transfers <- as.numeric(gsub(",", "", project$transfers))
 ```
 
 ```{r}
