@@ -14,10 +14,8 @@ library(tidyverse)
 ```
 
 ```{r, include=FALSE}
-project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")ß
 ```
-
-
 
 ```{r}
 # Make sure columns are cast to correct types
@@ -27,6 +25,7 @@ project$fare_class_category <- as.factor(project$fare_class_category)
 project$ridership <- as.numeric(gsub(",", "", project$ridership))
 project$transfers <- as.numeric(gsub(",", "", project$transfers))
 ```
+
 # Proofing data
 ```{r Checking-Data}
 #Data exported corresponds to the week defined in the project
@@ -39,7 +38,6 @@ colSums(is.na(project))
 sum(duplicated(project))
 
 ```
-
 
 ```{r 24h-Graph-prelim}
 #Using the mean, proposal/skeleton of potential graph that 
@@ -212,11 +210,23 @@ commute_period_test <- t.test(total_ridership ~ commute_period, data = hourly_ri
 commute_period_test
 ```
 
+Null hypothesis: Mean hourly ridership of commute periods = Mean hourly ridership of non-commute periods
+
+Alternative hypothesis: Mean hourly ridership of commute periods ≠ Mean hourly ridership of non-commute periods
+
+Alpha = 0.05 > P-value = 2.061e-10 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly ridership during commute periods is different that the mean hourly ridership during non-commute
+
 ```{r}
 # t-test for weekday vs. weekend means
 weekday_weekend_test <- t.test(total_ridership ~ day_type, data = hourly_ridership)
 weekday_weekend_test
 ```
+
+Null hypothesis: Mean hourly ridership of Weekdays = Mean hourly ridership of weekends
+
+Alternative hypothesis: Mean hourly ridership of Weekdays ≠ Mean hourly ridership of weekends
+
+Alpha = 0.05 > P-value = 7.411e-06 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly ridership on weekdays is different that the mean hourly ridership of weekends
 
 **ANOVA: Differences in ridership between time-of-day categories**
 
@@ -230,10 +240,25 @@ time_anova <- aov(total_ridership ~ time_of_day, data = hourly_ridership)
 summary(time_anova)
 ```
 
+Null hypothesis: Mean hourly ridership during morning = Mean hourly ridership during midday = Mean hourly ridership during evening = Mean hourly ridership during night
+
+Alternative hypothesis: The mean hourly ridership of at least one time of day category is different than the others.
+
+Alpha = 0.05 > P-value = <2e-16 --> Reject the null hypothesis. There is sufficient evidence to conclude that at least one time category group has a different mean hourly ridership than the others.
+
 ```{r}
 time_post_hoc <- TukeyHSD(time_anova)
 time_post_hoc
 ```
+
+Post hoc conclusions:
+- At the alpha = 0.05 level, the time periods pairings that have a significant difference are:
+  - Midday and Evening
+  - Morning and Evening
+  - Night and evening
+  - Night and midday
+  - Night and morning
+- Out of these, I think the notable differences in pairs are midday and evening and morning and evening (it makes sense that night is significantly lower than the others).
 
 **ANOVA: Differences in hourly ridership between boroughs**
 
@@ -256,10 +281,24 @@ borough_anova <- aov(total_ridership ~ borough, data = borough_daily)
 summary(borough_anova)
 ```
 
+Null hypothesis: Mean daily ridership in Manhattan = Mean daily ridership in Brooklyn = Mean daily ridership in Queens = Mean daily ridership in the Bronx
+
+Alternative hypothesis: The mean daily ridership of at least one borough is different than the others.
+
+Alpha = 0.05 > P-value = <2e-16 --> Reject the null hypothesis. There is sufficient evidence to conclude that at least one borough has a different mean daily ridership than the other boroughs.
+
 ```{r}
 borough_post_hoc <- TukeyHSD(borough_anova)
 borough_post_hoc
 ```
+
+Post hoc conclusions:
+- At the alpha = 0.05 level, the borough pairings that have a significant difference are:
+  - Brooklyn and the Bronx
+  - Manhattan and the Bronx
+  - Manhattan and Brooklyn
+  - Queens and Manhattan
+- Manhattan's mean daily ridership differs significantly from the mean daily ridership in all other boroughs
 
 # Transfers EDA, total and average bus to station transfers
 ```{r, message=FALSE}
