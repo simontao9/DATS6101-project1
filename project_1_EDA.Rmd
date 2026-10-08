@@ -53,7 +53,7 @@ hourly_ridership <- project %>%
   )
 
 day_mean_graph <- ggplot(hourly_ridership, aes(x = hour, y = mean_ridership)) +
-  geom_line(color = "#1A5276",linewidth = 1) +
+  geom_line(color = "#1A5279",linewidth = 1) +
   geom_point(color = "#2980B9",size = 1) +
   labs(
     title = "Average NYC Subway Ridership by Hour",
