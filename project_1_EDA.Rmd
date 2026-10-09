@@ -349,3 +349,19 @@ ggplot(hourly_transfers, aes(x = hour, y = mean_transfers, color = factor(statio
 )
 ```
 All 10 stations show a spike in average transfers during the morning commute time. Flushing-Main St. Station shows an elevated transfer rate through the day and evening.
+
+#Transfers to Brooklyn stations
+```{r}
+hourly_transfers_brooklyn <- project %>%
+  filter(borough == "Brooklyn") %>%
+  group_by(hour) %>%
+  summarize(
+   total_brooklyn_transfers = sum(transfers, na.rm = TRUE),
+    .groups = "drop"
+  )
+ggplot(hourly_transfers_brooklyn, aes(x = hour, y = total_brooklyn_transfers)) + geom_line() + labs(
+  title = "Hourly Subway Transfers in Brooklyn",
+  x = "Hour of Day",
+  y = "Total Transfers"
+)
+```
