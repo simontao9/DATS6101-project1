@@ -328,3 +328,24 @@ ggplot(top_transfer_stations, aes(x = reorder(station_complex_id, total_transfer
 The top five total transfer stations are Flushing-Main St (7), Jamaica Center-Parsons/Archer (E,J,Z), Kew Gardens-Union Tpke (E,F), 74-Broadway (7)/Jackson Hts-Roosevelt Av (E,F,M,R), Jamaica-179 St (F). There is a drop in total transfers after the Jamaica-179 St.
 
 The five highest transfer stations for the week of Sept 15-21 are also located in Queens.
+
+#Distribution of transfers at top 10 stations by hour
+```{r}
+hourly_transfers <- project %>%
+  semi_join(
+    top_transfer_stations,
+    by = c("station_complex_id")
+  ) %>%
+  group_by(station_complex_id, hour) %>%
+  summarize(
+    mean_transfers = mean(transfers, na.rm = TRUE),
+    .groups = "drop"
+  )
+ggplot(hourly_transfers, aes(x = hour, y = mean_transfers, color = factor(station_complex_id), group = station_complex_id)) + geom_line() + labs(
+  title = "Average Hourly Transfers at Top 10 Transfer Stations",
+  x = "Hour of Day",
+  y = "Mean Number of Transfers",
+  color = "Station Number"
+)
+```
+All 10 stations show a spike in average transfers during the morning commute time. Flushing-Main St. Station shows an elevated transfer rate through the day and evening.
