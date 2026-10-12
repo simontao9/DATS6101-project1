@@ -284,7 +284,7 @@ Post hoc conclusions:
   - Night and morning
 - Out of these, I think the notable differences in pairs are midday and evening and morning and evening (it makes sense that night is significantly lower than the others).
 
-**ANOVA: Differences in hourly ridership between boroughs**
+**ANOVA: Differences in daily ridership between boroughs**
 ```{r}
 # Daily ridership total for each borough
 borough_daily <- project %>%
@@ -332,7 +332,7 @@ Null hypothesis: Mean daily ridership in Manhattan = Mean daily ridership in Bro
 
 Alternative hypothesis: The mean daily ridership of at least one borough is different than the others.
 
-Alpha = 0.05 > P-value = <2e-16 --> Reject the null hypothesis. There is sufficient evidence to conclude that at least one borough has a different mean daily ridership than the other boroughs.
+Alpha = 0.05 > P-value = 1.38e-11 --> Reject the null hypothesis. There is sufficient evidence to conclude that at least one borough has a different mean daily ridership than the other boroughs.
 
 ```{r}
 borough_post_hoc <- TukeyHSD(borough_anova)
