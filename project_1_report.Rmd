@@ -16,24 +16,31 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include=FALSE}
-### Read in packages, data, and clean data for project analysis
 library(tidyverse)
+library(car)
 ```
+
+# Introduction and Data Description
+New York City has the largest subway system in the United States, and it serves as an essential part of the city's public infrastructure. There are many benefits to widespread public transportation systems, but maximizing their effectiveness requires an understanding of how people use public transit in their everyday lives.
+
+This exploration and analysis specifically examines New York City's subway ridership in Manhattan, Brooklyn, the Bronx, and Queens during the week of September 15-21, 2024. This specific week was chosen because we felt it was likely going to be the best representation of a relatively normal week, meaning there are no holidays, school is in session, and it is not off season.
+
+Specifically, we proposed the following three questions: “How do NYC subway ridership volumes vary throughout the day?”, "Which hours have the highest ridership average (weekdays vs. weekends)?", and "Do these hours correspond to commuting periods?"
 
 ```{r, include=FALSE}
 project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
 
-```{r, include=FALSE}
+```{r}
 # Make sure columns are cast to correct types
 project$borough <- as.factor(project$borough)
 project$payment_method <- as.factor(project$payment_method)
 project$fare_class_category <- as.factor(project$fare_class_category)
-project$ridership <- as.numeric(project$ridership)
-project$transfers <- as.numeric(project$transfers)
+project$ridership <- as.numeric(gsub(",", "", project$ridership))
+project$transfers <- as.numeric(gsub(",", "", project$transfers))
 ```
 
-```{r, include=FALSE}
+```{r}
 # Add 24-hour time column
 project <- project %>%
   mutate(
@@ -42,7 +49,7 @@ project <- project %>%
   )
 ```
 
-```{r, include=FALSE}
+```{r}
 # Add categories for morning, afternoon, evening, night
 # Morning (5am - noon), afternoon (noon - 4pm), evening (4pm - 8pm), night (8pm - 5am)
 project <- project %>%
@@ -56,7 +63,7 @@ project <- project %>%
   )
 ```
 
-```{r, include=FALSE}
+```{r}
 # Add day of week column
 project <- project %>%
   mutate(
@@ -64,9 +71,17 @@ project <- project %>%
   )
 ```
 
-# Introduction
+```{r}
+# Weekend vs. Weekday column
+project <- project %>%
+  mutate(day_type = if_else(day_of_week %in% c("Sat", "Sun"), "Weekend", "Weekday"))
+```
 
-# Data Description
+```{r}
+project$time_of_day <- as.factor(project$time_of_day)
+project$day_of_week <- as.factor(project$day_of_week)
+project$day_type <- as.factor(project$day_type)
+```
 
 # EDA
 

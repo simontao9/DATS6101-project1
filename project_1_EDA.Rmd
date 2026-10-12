@@ -11,10 +11,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, include=FALSE}
 library(tidyverse)
+library(car)
 ```
 
 ```{r, include=FALSE}
-project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")ß
+project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
 
 ```{r}
@@ -43,14 +44,14 @@ sum(duplicated(project))
 #Using the mean, proposal/skeleton of potential graph that 
 #maps over the entire week the average ridership over a 24h period
 hourly_ridership <- project %>%
-  group_by(hour) %>%
+  group_by(transit_timestamp) %>%
   summarize(
     total_ridership = sum(ridership, na.rm = TRUE),
     mean_ridership = mean(ridership, na.rm = TRUE),
     sd_ridership = sd(ridership, na.rm = TRUE)
   )
 
-day_mean_graph <- ggplot(hourly_ridership, aes(x = hour, y = mean_ridership)) +
+day_mean_graph <- ggplot(hourly_ridership, aes(x = transit_timestamp, y = mean_ridership)) +
   geom_line(color = "#1A5279",linewidth = 1) +
   geom_point(color = "#2980B9",size = 1) +
   labs(
@@ -105,6 +106,12 @@ project <- project %>%
 # Weekend vs. Weekday column
 project <- project %>%
   mutate(day_type = if_else(day_of_week %in% c("Sat", "Sun"), "Weekend", "Weekday"))
+```
+
+```{r}
+project$time_of_day <- as.factor(project$time_of_day)
+project$day_of_week <- as.factor(project$day_of_week)
+project$day_type <- as.factor(project$day_type)
 ```
 
 ```{r}
@@ -231,9 +238,26 @@ Alpha = 0.05 > P-value = 7.411e-06 --> Reject the null hypothesis. There is suff
 **ANOVA: Differences in ridership between time-of-day categories**
 
 ANOVA Assumptions Check:
-- Normality:
-- Homogeneity of variances:
-- Independence of errors:
+```{r}
+par(mfrow = c(2, 2))
+
+for (time_category in unique(hourly_ridership$time_of_day)) {
+  x <- hourly_ridership$total_ridership[hourly_ridership$time_of_day == time_category]
+  qqnorm(x, main = paste("Q-Q Plot:", time_category))
+  qqline(x)
+}
+```
+
+```{r}
+leveneTest(total_ridership ~ time_of_day, data = hourly_ridership)
+```
+
+- Normality, homogeneity of variances, independence of errors
+  - All three assumptions may be violated based on the checks conducted.
+    - QQ plots show deviation from normality, but sample sizes are large enough for test to be robust
+    - Levene's test shows heteroscedasticity
+    - Our sample was specifically selected not at random
+  - This may be a limitation of this ANOVA analysis
 
 ```{r}
 time_anova <- aov(total_ridership ~ time_of_day, data = hourly_ridership)
@@ -261,11 +285,34 @@ Post hoc conclusions:
 - Out of these, I think the notable differences in pairs are midday and evening and morning and evening (it makes sense that night is significantly lower than the others).
 
 **ANOVA: Differences in hourly ridership between boroughs**
+```{r}
+# Daily ridership total for each borough
+borough_daily <- project %>%
+  mutate(date = as.Date(timestamp)) %>%
+  group_by(date, borough) %>%
+  summarize(total_ridership = sum(ridership, na.rm = TRUE), .groups = "drop")
+```
 
 ANOVA Assumptions Check:
-- Normality:
-- Homogeneity of variances:
-- Independence of errors:
+```{r}
+par(mfrow = c(2, 2))
+
+for (b in unique(borough_daily$borough)) {
+  x <- borough_daily$total_ridership[borough_daily$borough == b]
+  qqnorm(x, main = paste("Q-Q Plot:", b))
+  qqline(x)
+}
+```
+
+```{r}
+leveneTest(total_ridership ~ borough, data = borough_daily)
+```
+- Normality, homogeneity of variances, independence of errors
+  - Normality and independence of errors have concern for violation
+    - QQ plots show deviation from normality in each borough, the sample sizes for each borough are also relatively low
+    - Our sample was specifically selected not at random
+  - Homogeneity of variance may also be violated, but there is evidence for homogeneity of variances at the alpha = 0.1 level
+  - Given these findings, this may be a limitation of this ANOVA analysis
 
 ```{r}
 # Daily ridership total for each borough

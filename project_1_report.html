@@ -11,7 +11,7 @@
 
 <meta name="author" content="Savannah Sauers, Lera Martinez, Simon Tao" />
 
-<meta name="date" content="2026-10-06" />
+<meta name="date" content="2026-10-11" />
 
 <title>Project 1 Report</title>
 
@@ -1569,16 +1569,58 @@ border-radius: 0px;
 
 <h1 class="title toc-ignore">Project 1 Report</h1>
 <h4 class="author">Savannah Sauers, Lera Martinez, Simon Tao</h4>
-<h4 class="date">2026-10-06</h4>
+<h4 class="date">2026-10-11</h4>
 
 </div>
 
 
-<div id="introduction" class="section level1">
-<h1>Introduction</h1>
-</div>
-<div id="data-description" class="section level1">
-<h1>Data Description</h1>
+<div id="introduction-and-data-description" class="section level1">
+<h1>Introduction and Data Description</h1>
+<p>New York City has the largest subway system in the United States, and
+it serves as an essential part of the city’s public infrastructure There
+are many benefits to widespread public transportation systems, but
+maximizing their effectiveness requires an understanding of how people
+use public transit in their everyday lives.</p>
+<p>This exploration and analysis specifically examines New York City’s
+subway ridership in Manhattan, Brooklyn, the Bronx, and Queens during
+the week of September 15-21, 2024. This specific week was chosen because
+we felt it was likely going to be the best representation of a
+relatively normal week, meaning there are no holidays, school is in
+session, and it is not off season.</p>
+<pre class="r"><code># Make sure columns are cast to correct types
+project$borough &lt;- as.factor(project$borough)
+project$payment_method &lt;- as.factor(project$payment_method)
+project$fare_class_category &lt;- as.factor(project$fare_class_category)
+project$ridership &lt;- as.numeric(gsub(&quot;,&quot;, &quot;&quot;, project$ridership))
+project$transfers &lt;- as.numeric(gsub(&quot;,&quot;, &quot;&quot;, project$transfers))</code></pre>
+<pre class="r"><code># Add 24-hour time column
+project &lt;- project %&gt;%
+  mutate(
+    timestamp = mdy_hms(transit_timestamp),
+    hour = hour(timestamp)
+  )</code></pre>
+<pre class="r"><code># Add categories for morning, afternoon, evening, night
+# Morning (5am - noon), afternoon (noon - 4pm), evening (4pm - 8pm), night (8pm - 5am)
+project &lt;- project %&gt;%
+  mutate(
+    time_of_day = case_when(
+      hour &gt;= 5 &amp; hour &lt; 11 ~ &quot;Morning&quot;,
+      hour &gt;= 11 &amp; hour &lt; 16 ~ &quot;Mid Day&quot;,
+      hour &gt;= 16 &amp; hour &lt; 21 ~ &quot;Evening&quot;,
+      TRUE ~ &quot;Night&quot;
+    )
+  )</code></pre>
+<pre class="r"><code># Add day of week column
+project &lt;- project %&gt;%
+  mutate(
+    day_of_week = wday(timestamp, label = TRUE)
+  )</code></pre>
+<pre class="r"><code># Weekend vs. Weekday column
+project &lt;- project %&gt;%
+  mutate(day_type = if_else(day_of_week %in% c(&quot;Sat&quot;, &quot;Sun&quot;), &quot;Weekend&quot;, &quot;Weekday&quot;))</code></pre>
+<pre class="r"><code>project$time_of_day &lt;- as.factor(project$time_of_day)
+project$day_of_week &lt;- as.factor(project$day_of_week)
+project$day_type &lt;- as.factor(project$day_type)</code></pre>
 </div>
 <div id="eda" class="section level1">
 <h1>EDA</h1>
