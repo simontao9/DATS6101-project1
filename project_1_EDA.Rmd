@@ -15,7 +15,7 @@ library(ezids)
 library(car)
 ```
 
-```{r, Visual-scheme include=FALSE}
+```{r Visual-scheme, include=FALSE}
 
 my_colors <- c(
   "Dark teal"   = "#176B5B",
@@ -261,14 +261,14 @@ Out of the top 10 stations for mean hourly ridership, 7 of them are in Manhattan
 top_stations <- project %>%
   group_by(station_complex, station_complex_id, borough) %>%
   summarize(
-    mean_ridership = mean(ridership, na.rm = TRUE),
+    stations_mean_ridership = mean(ridership, na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  slice_max(mean_ridership, n = 10, with_ties = FALSE) #So R does not print all 400+ with_ties=False means exactly 10 (even if multiple stations have the same mean ridership)
+  slice_max(stations_mean_ridership, n = 10, with_ties = FALSE) #So R does not print all 400+ with_ties=False means exactly 10 (even if multiple stations have the same mean ridership)
 
 ggplot(top_stations,
-       aes(x = reorder(station_complex, mean_ridership),
-           y = mean_ridership, fill = borough)) +
+       aes(x = reorder(station_complex, stations_mean_ridership),
+           y = stations_mean_ridership, fill = borough)) +
   geom_col() +
   coord_flip() + #Long station names are legible
   scale_fill_manual(
@@ -291,26 +291,36 @@ ggplot(top_stations,
 ```
 
 ```{r 24h-Graph-prelim}
-#Using the mean, proposal/skeleton of potential graph that 
-#maps over the entire week the average ridership over a 24h period
-hourly_ridership <- project %>%
+#Using the mean, map over the entire week the average ridership over a 24h period
+#Something not quite right here
+hourly_mean_ridership <- project %>%
   group_by(transit_timestamp) %>%
   summarize(
-    unique_hours = n_distinct(mdy_hms(transit_timestamp)),
-    unique_stations = n_distinct(station_complex_id),
-    unique_boroughs = n_distinct(borough)
-  )
+    mean_ridership = mean(ridership, na.rm = TRUE),
+    .groups = "drop"
+  ) 
 
-day_mean_graph <- ggplot(hourly_ridership, aes(x = transit_timestamp, y = mean_ridership)) +
-  geom_line(color = "#1A5279",linewidth = 1) +
-  geom_point(color = "#2980B9",size = 1) +
+average_24hr_ridership <- hourly_mean_ridership %>%
+  mutate(
+    timestamp = lubridate::mdy_hms(transit_timestamp),
+    hour = lubridate::hour(timestamp)
+  ) %>%
+  group_by(hour) %>%
+  summarize(
+    mean_ridership = mean(mean_ridership, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(hour)
+
+day_mean_graph <- ggplot(average_24hr_ridership, aes(x = hour, y = mean_ridership)) +
+  geom_line(color = "#176B5B",linewidth = 1) +
+  geom_point(color = "#42BFA5",size = 1) +
   labs(
     title = "Average NYC Subway Ridership by Hour",
     x = "Hour of Day",
     y = "Average Ridership"
   ) +
-  theme_minimal()+ 
-  theme(panel.grid.minor = element_blank())
+  theme_mygraphs()
 
 day_mean_graph
 ```
@@ -338,16 +348,20 @@ ggplot(
 ) +
   geom_col() +
   coord_flip() +
+    scale_fill_manual(
+  values = c(
+    "Bronx"     = "#D09A3A",
+    "Brooklyn"  = "#008C7A",
+    "Manhattan" = "#176B5B",
+    "Queens"    = "#42BFA5" )
+  ) +
   labs(
     title = "Top 10 Stations by Total Ridership",
     x = "Station Complex",
     y = "Total Ridership",
     fill = "Borough"
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5)
-  )
+  theme_mygraphs()
 
 ```
 
@@ -356,19 +370,32 @@ ggplot(
 scatter <- project %>%
   ggplot(aes(x=ridership, y=transfers, color=borough)) +
   geom_smooth(method = "lm") + 
+   scale_color_manual(
+  values = c(
+    "Bronx"     = "#D09A3A",
+    "Brooklyn"  = "#008C7A",
+    "Manhattan" = "#176B5B",
+    "Queens"    = "#42BFA5" )
+  ) +
   labs(
     title = "Relationship Between Ridership and Transfers by Borough",
     x = "Ridership",
     y = "Transfers",
     color = "Borough"
   ) +
-  theme_minimal()
+  theme_mygraphs()
   
 
 scatter
 ```
 
 ```{r Line-graph-daily-ridership-24-hr}
+
+project <- project %>%
+  mutate(
+    timestamp = mdy_hms(transit_timestamp),
+    hour = hour(timestamp)
+  )
 
 #Sum of system ridership for each hour of each day
 daily_hourly_ridership <- project %>%
@@ -396,12 +423,31 @@ ggplot(
     labels = sprintf("%02d:00", 0:23) #24 hour format
   ) +
   scale_y_continuous(labels = scales::comma) + #Adds commas to the numbers on the axis
+scale_color_manual(
+  values = c(
+    "#176B5B",  # Dark teal
+    "#008C7A",  # Teal
+    "#00A99D",  # Turquoise
+    "#D09A3A",  # Muted gold
+    "#C47A3C",  # Light brown
+    "#6B8E72",  # Sage
+    "#B5C83E"   # Yellow green
+  )
+)+
   labs(
     title = "NYC Subway Ridership by Hour for Each Day",
     x = "Hour of Day",
     y = "Total System Ridership"
   ) +
-  theme_mygraphs()
+  theme_mygraphs()+ 
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 9
+    )
+  )
 
 ```
 
