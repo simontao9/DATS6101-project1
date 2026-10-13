@@ -163,7 +163,6 @@ week_bar_chart_observations
 xkablesummary (project, title = "Summary Statistics for Project")
 ```
 
-
 ## Clean Data (create columns that will be used for our analysis)
 ```{r 24-hr-column}
 # Add 24-hour time column
@@ -221,6 +220,7 @@ project <- project %>%
   )
 
 ```
+
 
 ## EDA
 ```{r Unique-station-complexes}
@@ -285,10 +285,8 @@ ggplot(top_stations,
     fill = "Borough"
   ) +
   theme_mygraphs()
-
-
-
 ```
+
 
 ```{r 24h-Graph-prelim}
 #Using the mean, map over the entire week the average ridership over a 24h period
@@ -451,7 +449,39 @@ scale_color_manual(
 
 ```
 
+```{r Boxplot-graph-system-ridership-by-hour}
 
+ggplot(
+  daily_hourly_ridership,
+  aes(x = factor(hour), y = total_ridership)
+) +
+  geom_boxplot(
+    fill = "#008C7A",
+    color = "#176B5B",
+    alpha = 0.85,
+    outlier.color = "#C47A3C",
+    outlier.alpha = 0.7
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_discrete(
+    labels = sprintf("%02d:00", 0:23)
+  ) +
+  labs(
+    title = "Distribution of Hourly System Ridership",
+    subtitle = "Variation in total ridership across observed days",
+    x = "Hour of Day",
+    y = "Total System Ridership"
+  ) +
+  theme_mygraphs() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      size = 9
+    )
+  )
+
+```
 
 ```{r Line-graph-average-ridership-24-hr}
 
@@ -575,6 +605,32 @@ ggplot(system_hourly_day,
   )
 
 ```
+```{r Bar-chart-ridership-time-of-day}
+time_of_day_ridership <- project %>%
+  group_by(time_of_day) %>%
+  summarize(
+    mean_ridership = mean(ridership, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(time_of_day_ridership,
+       aes(x = time_of_day, y = mean_ridership, fill = time_of_day)) +
+  geom_col() +
+  scale_fill_manual(values = c(
+    "Morning" = "#176B5B",
+    "Mid Day" = "#72C47A",
+    "Evening" = "#D09A3A",
+    "Night" = "#C47A3C"
+  )) +
+  labs(
+    title = "Average System Ridership by Time of Day",
+    x = "Time of Day",
+    y = "Mean Ridership"
+  ) +
+  theme_mygraphs() +
+    theme(legend.position = "none")
+
+```
 
 ```{r Hourly-ridership-borough}
 
@@ -625,6 +681,27 @@ ggplot(borough_hourly,
 
 ```
 
+```{r Summary-statistics-ridership-transfers}
+#Station ridership
+project %>%
+  summarize(
+    median = median(ridership, na.rm = TRUE),
+    IQR = IQR(ridership, na.rm = TRUE),
+    standard_deviation = sd(ridership, na.rm = TRUE),
+    minimum = min(ridership, na.rm = TRUE),
+    maximum = max(ridership, na.rm = TRUE)
+  )
+
+#Station transfers
+project %>%
+  summarize(
+    median = median(transfers, na.rm = TRUE),
+    IQR = IQR(transfers, na.rm = TRUE),
+    standard_deviation = sd(transfers, na.rm = TRUE),
+    minimum = min(transfers, na.rm = TRUE),
+    maximum = max(transfers, na.rm = TRUE)
+  )
+```
 
 ## Hypothesis Testing
 Questions of interest:
@@ -814,6 +891,29 @@ Post hoc conclusions:
   - Manhattan and Brooklyn
   - Queens and Manhattan
 - Manhattan's mean daily ridership differs significantly from the mean daily ridership in all other boroughs
+
+```{r, Boxplot-graph-daily-ridership-by-borough}
+
+ggplot(borough_daily,
+       aes(x = borough, y = total_ridership, fill = borough)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c(
+    "Bronx" = "#6B8E72",
+    "Brooklyn" = "#008C7A",
+    "Manhattan" = "#176B5B",
+    "Queens" = "#42BFA5"
+  )) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "Daily Ridership Distribution by Borough",
+    x = "Borough",
+    y = "Daily Total Ridership"
+  ) +
+  theme_mygraphs() +
+  theme(legend.position = "none")
+```
+
+
 
 # Transfers EDA, total and average bus to station transfers
 ```{r, message=FALSE}
