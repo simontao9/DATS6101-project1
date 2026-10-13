@@ -823,3 +823,27 @@ ggplot(hourly_transfers_total, aes(x = hour, y = total_hourly_transfers, color =
   color = "Borough"
 )
 ```
+#QQ Plots for Ridership by Borough
+```{r}
+hourly_transfers_total <- project %>%
+  group_by(hour, borough) %>%
+  summarize(total_hourly_transfers = sum(transfers, na.rm = TRUE),
+  .groups = "drop"
+)
+boroughs <- unique(hourly_transfers_total$borough)
+par(mfrow = c(2,2))
+
+for (b in boroughs) {
+  borough_data <- hourly_transfers_total$total_hourly_transfers[
+    hourly_transfers_total$borough == b
+  ]
+
+  qqnorm(borough_data,
+         main = paste("Q-Q Plot:", b),
+         xlab = "Theoretical Quantiles",
+         ylab = "Sample Quantiles")
+
+  qqline(borough_data, col = "red", lwd = 2)
+}
+par(mfrow = c(1, 1))
+```
