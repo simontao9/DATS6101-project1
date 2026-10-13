@@ -15,11 +15,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, include=FALSE}
-library(tidyverse)
-library(car)
-```
-
 # Introduction and Data Description
 New York City has the largest subway system in the United States, and it serves as an essential part of the city's public infrastructure. There are many benefits to widespread public transportation systems, but maximizing their effectiveness requires an understanding of how people use public transit in their everyday lives.
 
@@ -27,31 +22,30 @@ This exploration and analysis specifically examines New York City's subway rider
 
 Specifically, we proposed the following three questions: “How do NYC subway ridership volumes vary throughout the day?”, "Which hours have the highest ridership average (weekdays vs. weekends)?", and "Do these hours correspond to commuting periods?"
 
-```{r, include=FALSE}
+```{r Read in packages and data, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ezids)
+library(car)
 project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
 
-```{r}
+```{r Data Cleaning}
 # Make sure columns are cast to correct types
 project$borough <- as.factor(project$borough)
 project$payment_method <- as.factor(project$payment_method)
 project$fare_class_category <- as.factor(project$fare_class_category)
 project$ridership <- as.numeric(gsub(",", "", project$ridership))
 project$transfers <- as.numeric(gsub(",", "", project$transfers))
-```
 
-```{r}
 # Add 24-hour time column
 project <- project %>%
   mutate(
     timestamp = mdy_hms(transit_timestamp),
     hour = hour(timestamp)
   )
-```
 
-```{r}
 # Add categories for morning, afternoon, evening, night
-# Morning (5am - noon), afternoon (noon - 4pm), evening (4pm - 8pm), night (8pm - 5am)
+# Morning (5am - 10:59am), afternoon (11am - 3:59pm), evening (4pm - 8:59pm), night (9pm - 4:59am)
 project <- project %>%
   mutate(
     time_of_day = case_when(
@@ -61,30 +55,66 @@ project <- project %>%
       TRUE ~ "Night"
     )
   )
-```
 
-```{r}
 # Add day of week column
 project <- project %>%
   mutate(
     day_of_week = wday(timestamp, label = TRUE)
   )
-```
 
-```{r}
 # Weekend vs. Weekday column
 project <- project %>%
   mutate(day_type = if_else(day_of_week %in% c("Sat", "Sun"), "Weekend", "Weekday"))
-```
 
-```{r}
+# Commuter hours column
+project <- project %>%
+  mutate(
+    commute_type = case_when(
+      day_type == "Weekday" & hour >= 5 & hour < 11 ~ "Morning Commute",
+      day_type == "Weekday" & hour >= 16 & hour < 21 ~ "Evening Commute",
+      TRUE ~ "Other Hours"
+    )
+  )
+
 project$time_of_day <- as.factor(project$time_of_day)
 project$day_of_week <- as.factor(project$day_of_week)
 project$day_type <- as.factor(project$day_type)
+project$commute_type <- as.factor(project$commute_type)
 ```
 
 # EDA
 
-# Analysis
+# Analysis and Interpretation
+
+**Overview**
+
+In order to further analyze the three questions of interest, four different statistical tests were performed on our dataset. These tests consisted of a two-sample t-test comparing mean hourly ridership in commute versus non-commute periods, a two-sample t-test comparing mean hourly ridership between weekdays and weekends, a one-way ANOVA that compares mean hourly ridership between different time-of-day categories (morning, midday, evening, and night), and a one-way ANOVA that compares mean daily ridership between the four boroughs in the dataset.
+
+**Commute vs. Non-Commute t-test**
+
+A two-sample t test was conducted to determine if there was a statistically significant difference between the mean hourly ridership during commute and non-commute periods. Commute periods were classified to be during the morning or evening, which falls between 5-11am and 4-9pm in the context of this dataset. Non-commute periods were classified as midday and night periods, falling from 11am-4pm and 9pm-5am. 
+
+The null hypothesis for this test states that the mean hourly ridership during commute periods is equal to the mean hourly ridership during non-commute periods. The alternative hypothesis states that the mean hourly ridership during commute periods is different from the mean hourly ridership during non-commute periods. Before conducting this test, the assumptions were checked. We found that the population standard deviation was unknown given that we took a sample of the data and that the sample size is large enough per the central limit theorem to be robust against a normality violation. The independent observation may be violated due to our data being a time series set, but we continued with the two-sample t-test because it most closely fit the situation we are analyzing.
+
+```{r Commute vs. Non-Commute t-test}
+hourly_ridership <- project %>%
+  mutate(commute_period = if_else(commute_type %in% c("Morning Commute", "Evening Commute"), "Commute","Non-Commute")) %>%
+  group_by(timestamp, day_type, time_of_day, commute_period) %>%
+  summarize(total_ridership = sum(ridership, na.rm = TRUE), .groups = "drop")
+
+par(mfrow = c(1, 2))
+qqnorm(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Commute"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Commute"])
+qqnorm(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Non-Commute"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Non-Commute"])
+
+# t-test for commute time vs. non-commute time means
+commute_period_test <- t.test(total_ridership ~ commute_period, data = hourly_ridership)
+commute_period_test
+```
+
+At the $\alpha$ = 0.05 level, this test produced a T statistic equal to 8.7228 with 84.945 degrees of freedom. The associated p-value was very small (1.975e-13). Given these findings, there is sufficient evidence to reject the null hypothesis. We are able to conclude that there is a statistically significant difference between the mean hourly ridership in the commute periods versus the non-commute periods.
+
+A further look at the t.test output showed that the mean hourly ridership in the commute group was 250,605 and the mean hourly ridership between the non-commute group was 104,204.5. Additionally, we are 95% confident that the the difference in the mean hourly ridership between the commute and non-commute groups is between 113,029.8 and 179,204.5.
 
 # Conclusions

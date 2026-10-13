@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, include=FALSE}
 library(tidyverse)
 library(ezids)
+library(car)
 ```
 
 ```{r, Visual-scheme include=FALSE}
@@ -97,7 +98,10 @@ theme_mygraphs <- function(base_size = 12,
 
 ```{r, include=FALSE}
 project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
-library(car)
+```
+
+```{r, include=FALSE}
+project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
 
 ```{r}
@@ -111,19 +115,17 @@ project$transfers <- as.numeric(gsub(",", "", project$transfers))
 
 # Proofing data
 ```{r Checking-data}
-
-#Checking for any NA values
+# Checking for any NA values
 colSums(is.na(project))
 
-#Checking for duplicates 
+# Checking for duplicates 
 sum(duplicated(project))
 
 str(project)
 
-#Checking for any negative values to make sure there were no stragglers in the data cleaning 
+# Checking for any negative values to make sure there were no stragglers in the data cleaning 
 sum(project$ridership < 0, na.rm = TRUE)
 sum(project$transfers < 0, na.rm = TRUE)
-
 ```
 
 
@@ -156,12 +158,6 @@ week_bar_chart_observations <- ggplot(observations_total, aes(x = date, y = numb
 week_bar_chart_observations
 ```
 
-
-```{r}
-head(project)
-str(project)
-```
-
 # Descriptive Statistics
 ```{r Descriptive-statistics}
 xkablesummary (project, title = "Summary Statistics for Ridership")
@@ -180,7 +176,7 @@ project <- project %>%
 
 ```{r Day-categories}
 # Add categories for morning, afternoon, evening, night
-# Morning (5am - 11), afternoon (11 - 4pm), evening (4pm - 9pm), night (9pm - 5am)
+# Morning (5am - 10:59am), afternoon (11am - 3:59pm), evening (4pm - 8:59pm), night (9pm - 4:59am)
 project <- project %>%
   mutate(
     time_of_day = case_when(
@@ -193,7 +189,7 @@ project <- project %>%
 
 ```
 
-```{r Day-of-week-column}
+```{r Day-of-week column}
 # Add day of week column
 project <- project %>%
   mutate(
@@ -201,29 +197,25 @@ project <- project %>%
   )
 ```
 
-```{r Weekend-weekday-column}
+```{r Weekend-weekday column}
 # Weekend vs. Weekday column
 project <- project %>%
   mutate(day_type = if_else(day_of_week %in% c("Sat", "Sun"), "Weekend", "Weekday"))
 ```
 
-```{r}
+```{r More Cleaning}
 project$time_of_day <- as.factor(project$time_of_day)
 project$day_of_week <- as.factor(project$day_of_week)
 project$day_type <- as.factor(project$day_type)
 ```
 
-```{r}
-str(project)
-```
-
-```{r Suggestion-Commute-hrs}
+```{r Commute Type column}
 # Suggestion commuter hours 
 project <- project %>%
   mutate(
-    commuting = case_when(
-      day_type == "Weekday" & hour >= 7  & hour < 10 ~ "Morning Commute",
-      day_type == "Weekday" & hour >= 16 & hour < 19 ~ "Evening Commute",
+    commute_type = case_when(
+      day_type == "Weekday" & hour >= 5 & hour < 11 ~ "Morning Commute",
+      day_type == "Weekday" & hour >= 16 & hour < 21 ~ "Evening Commute",
       TRUE ~ "Other Hours"
     )
   )
@@ -583,9 +575,11 @@ Questions of interest:
 **T-Tests: Commute vs. Non-commute; Weekday vs. Weekend**
 ```{r}
 hourly_ridership <- project %>%
-  mutate(commute_period = if_else(time_of_day %in% c("Morning", "Evening"), "Commute","Non-Commute")) %>%
+  mutate(commute_period = if_else(commute_type %in% c("Morning Commute", "Evening Commute"), "Commute","Non-Commute")) %>%
   group_by(timestamp, day_type, time_of_day, commute_period) %>%
   summarize(total_ridership = sum(ridership, na.rm = TRUE), .groups = "drop")
+
+hourly_ridership
 ```
 
 Commute vs. Non-commute time periods:
@@ -632,7 +626,7 @@ Null hypothesis: Mean hourly ridership of commute periods = Mean hourly ridershi
 
 Alternative hypothesis: Mean hourly ridership of commute periods ≠ Mean hourly ridership of non-commute periods
 
-Alpha = 0.05 > P-value = 2.061e-10 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly ridership during commute periods is different that the mean hourly ridership during non-commute
+Alpha = 0.05 > P-value = 1.975e-130 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly ridership during commute periods is different that the mean hourly ridership during non-commute
 
 ```{r}
 # t-test for weekday vs. weekend means
