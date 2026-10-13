@@ -14,13 +14,90 @@ library(tidyverse)
 library(ezids)
 ```
 
-```{r, include=FALSE}
-project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")β
-library(car)
+```{r, Visual-scheme include=FALSE}
+
+my_colors <- c(
+  "Dark teal"   = "#176B5B",
+  "Teal"        = "#008C7A",
+  "Turquoise"   = "#00A99D",
+  "Sea green"   = "#42BFA5",
+  "Soft green"  = "#72C47A",
+  "Fresh green" = "#9BC53D",
+  "Yellow green"= "#B5C83E",
+  "Muted gold"  = "#D09A3A",
+  "Light brown"  = "#C47A3C",
+  "Sage"        = "#6B8E72"
+)
+
+
+#Reusable graph theme https://rfortherestofus.com/2025/04/ggplot2-theme
+
+theme_mygraphs <- function(base_size = 12,
+                           base_family = "Arial") {
+
+  theme_minimal(
+    base_size = base_size,
+    base_family = base_family
+  ) +
+    theme(
+      plot.title = element_text(
+        size = 15,
+        face = "bold",
+        color = "#222222",
+        hjust = 0.5,
+        margin = margin(b = 10)
+      ),
+
+      plot.subtitle = element_text(
+        size = 11,
+        color = "#555555",
+        hjust = 0.5
+      ),
+
+      axis.title = element_text(
+        size = 11,
+        face = "bold",
+        color = "#222222"
+      ),
+
+      axis.text = element_text(
+        size = 10,
+        color = "#333333"
+      ),
+
+         # Spacing
+      plot.title.position = "plot",
+      plot.margin = margin(10, 12, 10, 12
+                           ),   
+      
+      # Gridlines
+      panel.grid.major = element_line(
+        color = "#E8E8E8",
+        linewidth = 0.4
+      ),
+
+      panel.grid.minor = element_blank(),
+
+      # Legends
+      legend.position = "bottom",
+
+      legend.title = element_text(
+        face = "bold",
+        size = 10
+      ),
+
+      legend.text = element_text(
+        size = 10
+      ),
+
+      legend.background = element_blank()
+      )
+}
 ```
 
 ```{r, include=FALSE}
-project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")β
+project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+library(car)
 ```
 
 ```{r}
@@ -50,32 +127,6 @@ sum(project$transfers < 0, na.rm = TRUE)
 ```
 
 
-```{r 24h-Graph-prelim}
-#Using the mean, proposal/skeleton of potential graph that 
-#maps over the entire week the average ridership over a 24h period
-hourly_ridership <- project %>%
-  group_by(transit_timestamp) %>%
-  summarize(
-    unique_hours = n_distinct(mdy_hms(transit_timestamp)),
-    unique_stations = n_distinct(station_complex_id),
-    unique_boroughs = n_distinct(borough)
-  )
-
-day_mean_graph <- ggplot(hourly_ridership, aes(x = transit_timestamp, y = mean_ridership)) +
-  geom_line(color = "#1A5279",linewidth = 1) +
-  geom_point(color = "#2980B9",size = 1) +
-  labs(
-    title = "Average NYC Subway Ridership by Hour",
-    x = "Hour of Day",
-    y = "Average Ridership"
-  ) +
-  theme_minimal()+ 
-  theme(panel.grid.minor = element_blank())
-
-day_mean_graph
-```
-
-
 ```{r Observations-by-day}
 with_timestamp <- project %>%
   mutate(timestamp = mdy_hms(transit_timestamp))
@@ -92,20 +143,15 @@ observations_total
 ```{r Bar-chart-observations-by-day}
 
 week_bar_chart_observations <- ggplot(observations_total, aes(x = date, y = number_of_observations)) +
-  geom_col(fill = "steelblue", width = 0.7) +
+  geom_col(fill = "#176B5B", width = 0.7) +
   scale_x_date(breaks = observations_total$date,date_labels = "%b %d")+ #To include all the dates on the x axis with the month and date
   labs(
     title = "Number of Observations per Day",
     x = "Date",
     y = "Number of Observations"
   ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5), #hjust 0.5 to center the title
-    axis.title = element_text(face = "bold"),
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor = element_blank()
-  )
+  theme_mygraphs()
+ 
 
 week_bar_chart_observations
 ```
@@ -233,17 +279,50 @@ ggplot(top_stations,
            y = mean_ridership, fill = borough)) +
   geom_col() +
   coord_flip() + #Long station names are legible
+  scale_fill_manual(
+  values = c(
+    "Bronx"     = "#D09A3A",
+    "Brooklyn"  = "#008C7A",
+    "Manhattan" = "#176B5B",
+    "Queens"    = "#42BFA5" )
+  ) +
   labs(
     title = "Top 10 Stations by Average Hourly Ridership",
     x = "Station",
     y = "Mean Ridership per Station",
     fill = "Borough"
   ) +
-  theme_minimal() +
-  theme(plot.title = element_text(face = "bold", hjust = 0.5))
+  theme_mygraphs()
+
 
 
 ```
+
+```{r 24h-Graph-prelim}
+#Using the mean, proposal/skeleton of potential graph that 
+#maps over the entire week the average ridership over a 24h period
+hourly_ridership <- project %>%
+  group_by(transit_timestamp) %>%
+  summarize(
+    unique_hours = n_distinct(mdy_hms(transit_timestamp)),
+    unique_stations = n_distinct(station_complex_id),
+    unique_boroughs = n_distinct(borough)
+  )
+
+day_mean_graph <- ggplot(hourly_ridership, aes(x = transit_timestamp, y = mean_ridership)) +
+  geom_line(color = "#1A5279",linewidth = 1) +
+  geom_point(color = "#2980B9",size = 1) +
+  labs(
+    title = "Average NYC Subway Ridership by Hour",
+    x = "Hour of Day",
+    y = "Average Ridership"
+  ) +
+  theme_minimal()+ 
+  theme(panel.grid.minor = element_blank())
+
+day_mean_graph
+```
+
 
 ```{r Bar-chart-top-10-busiest-stations-total-sum}
 
@@ -300,7 +379,6 @@ scatter
 ```{r Line-graph-daily-ridership-24-hr}
 
 #Sum of system ridership for each hour of each day
-#
 daily_hourly_ridership <- project %>%
   mutate(date = as.Date(timestamp)) %>%
   group_by(date, hour) %>%
@@ -331,13 +409,7 @@ ggplot(
     x = "Hour of Day",
     y = "Total System Ridership"
   ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5), 
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "right",
-    panel.grid.minor = element_blank()
-  )
+  theme_mygraphs()
 
 ```
 
