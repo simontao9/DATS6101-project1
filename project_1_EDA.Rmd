@@ -640,7 +640,7 @@ Alternative hypothesis: Mean hourly ridership of Weekdays ≠ Mean hourly riders
 
 Alpha = 0.05 > P-value = 7.411e-06 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly ridership on weekdays is different that the mean hourly ridership of weekends
 
-**ANOVA: Differences in ridership between time-of-day categories**
+**ANOVA: Differences in mean hourly ridership between time-of-day categories**
 
 ANOVA Assumptions Check:
 ```{r}

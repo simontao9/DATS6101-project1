@@ -117,4 +117,64 @@ At the $\alpha$ = 0.05 level, this test produced a T statistic equal to 8.7228 w
 
 A further look at the t.test output showed that the mean hourly ridership in the commute group was 250,605 and the mean hourly ridership between the non-commute group was 104,204.5. Additionally, we are 95% confident that the the difference in the mean hourly ridership between the commute and non-commute groups is between 113,029.8 and 179,204.5.
 
+**Weekday vs. Weekend t-test**
+```{r Weekday vs. Weekend t-test}
+par(mfrow = c(1, 2))
+qqnorm(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekday"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekday"])
+qqnorm(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekend"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekend"])
+
+# t-test for weekday vs. weekend means
+weekday_weekend_test <- t.test(total_ridership ~ day_type, data = hourly_ridership)
+weekday_weekend_test
+```
+
+**ANOVA: Differences in mean hourly ridership between time-of-day categories**
+```{r Time-of-Day ANOVA}
+# Assumptions check
+par(mfrow = c(2, 2))
+for (time_category in unique(hourly_ridership$time_of_day)) {
+  x <- hourly_ridership$total_ridership[hourly_ridership$time_of_day == time_category]
+  qqnorm(x, main = paste("Q-Q Plot:", time_category))
+  qqline(x)
+}
+
+leveneTest(total_ridership ~ time_of_day, data = hourly_ridership)
+
+# One way ANOVA test and post hoc
+time_anova <- aov(total_ridership ~ time_of_day, data = hourly_ridership)
+summary(time_anova)
+
+time_post_hoc <- TukeyHSD(time_anova)
+time_post_hoc
+```
+
+**ANOVA: Differences in mean daily ridership between boroughs**
+```{r Borough ANOVA}
+# Daily ridership total for each borough
+borough_daily <- project %>%
+  mutate(date = as.Date(timestamp)) %>%
+  group_by(date, borough) %>%
+  summarize(total_ridership = sum(ridership, na.rm = TRUE), .groups = "drop")
+
+# Assumptions check
+par(mfrow = c(2, 2))
+for (b in unique(borough_daily$borough)) {
+  x <- borough_daily$total_ridership[borough_daily$borough == b]
+  qqnorm(x, main = paste("Q-Q Plot:", b))
+  qqline(x)
+}
+
+leveneTest(total_ridership ~ borough, data = borough_daily)
+
+# One way ANOVA test: Do daily averages in each borough differ?
+borough_anova <- aov(total_ridership ~ borough, data = borough_daily)
+summary(borough_anova)
+
+# Post hoc tests
+borough_post_hoc <- TukeyHSD(borough_anova)
+borough_post_hoc
+```
+
 # Conclusions
