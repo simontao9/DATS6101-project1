@@ -101,7 +101,7 @@ project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MT
 ```
 
 ```{r, include=FALSE}
-project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+#project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
 
 ```{r}
@@ -160,7 +160,7 @@ week_bar_chart_observations
 
 # Descriptive Statistics
 ```{r Descriptive-statistics}
-xkablesummary (project, title = "Summary Statistics for Ridership")
+xkablesummary (project, title = "Summary Statistics for Project")
 ```
 
 
@@ -350,7 +350,7 @@ ggplot(
   coord_flip() +
     scale_fill_manual(
   values = c(
-    "Bronx"     = "#D09A3A",
+    "Bronx"     = "#6B8E72",
     "Brooklyn"  = "#008C7A",
     "Manhattan" = "#176B5B",
     "Queens"    = "#42BFA5" )
@@ -372,7 +372,7 @@ scatter <- project %>%
   geom_smooth(method = "lm") + 
    scale_color_manual(
   values = c(
-    "Bronx"     = "#D09A3A",
+    "Bronx"     = "#6B8E72",
     "Brooklyn"  = "#008C7A",
     "Manhattan" = "#176B5B",
     "Queens"    = "#42BFA5" )
@@ -468,8 +468,8 @@ ggplot(
   average_hourly_ridership,
   aes(x = hour, y = mean_ridership)
 ) +
-  geom_line(color = "magenta", linewidth = 1.3) +
-  geom_point(color = "purple", size = 1.5) +
+  geom_line(color = "#176B5B", linewidth = 1.3) +
+  geom_point(color = "#176B5B", size = 1.5) +
   scale_x_continuous(
     breaks = 0:23,
     labels = sprintf("%02d:00", 0:23)
@@ -480,14 +480,15 @@ ggplot(
     x = "Hour of Day",
     y = "Average Total System Ridership"
   ) +
-  theme_minimal(base_size = 12) +
+  theme_mygraphs()+ 
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.minor = element_blank()
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 9
+    )
   )
-
 ```
 
 ```{r Line-graph-weekday-weekend-average-ridership}
@@ -519,8 +520,8 @@ ggplot(
   geom_point(size = 2) +
   scale_color_manual(
     values = c(
-      "Weekday" = "#2471A3",
-      "Weekend" = "#E67E22"
+      "Weekday" = "#00A99D",
+      "Weekend" = "#B5C83E"
     )
   ) +
   scale_x_continuous(
@@ -534,18 +535,19 @@ ggplot(
     y = "Average System-Wide Ridership",
     color = "Day Type"
   ) +
-  theme_minimal(base_size = 12) +
+  theme_mygraphs() + 
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.minor = element_blank()
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 9
+    )
   )
 
 ```
 
 ```{r Boxplot-weekday-weekend}
-
-#Review whether this is correct sequence of grouping
 
 system_hourly_day <- project %>%
   group_by(timestamp, day_type) %>%
@@ -557,9 +559,9 @@ system_hourly_day <- project %>%
 #Plot
 ggplot(system_hourly_day,
        aes(x = day_type, y = total_ridership, fill = day_type)) +
-  geom_boxplot(alpha = 0.8) +
-  scale_fill_manual(values = c("Weekday" = "#2471A3",
-                               "Weekend" = "#E67E22")) +
+  geom_boxplot(alpha = 0.9) +
+  scale_fill_manual(values = c("Weekday" = "#00A99D",
+                               "Weekend" = "#B5C83E")) +
   scale_y_continuous(labels = scales::comma) +
   labs(
     title = "Hourly Ridership Weekdays vs. Weekends",
@@ -593,7 +595,17 @@ ggplot(borough_hourly,
        aes(x = hour, y = mean_ridership, color = borough)) +
   geom_line(linewidth = 1.1) +
   geom_point(size = 1.5) +
-  scale_x_continuous(breaks = 0:23) +
+   scale_color_manual(
+   values = c(
+    "Bronx"     = "#6B8E72",
+    "Brooklyn"  = "#008C7A",
+    "Manhattan" = "#176B5B",
+    "Queens"    = "#42BFA5" )
+  ) +
+  scale_x_continuous(
+    breaks = 0:23, 
+    labels = sprintf("%02d:00", 0:23) 
+  ) +
   scale_y_continuous(labels = scales::comma) +
   labs(
     title = "Average Hourly Ridership by Borough",
@@ -601,9 +613,14 @@ ggplot(borough_hourly,
     y = "Mean Total Borough Ridership",
     color = "Borough"
   ) +
-  theme_minimal() +
+  theme_mygraphs() + 
   theme(
-    plot.title = element_text(face = "bold", hjust = 0.5)
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 9
+    )
   )
 
 ```
