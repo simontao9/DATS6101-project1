@@ -147,11 +147,13 @@ observations_total
 week_bar_chart_observations <- ggplot(observations_total, aes(x = date, y = number_of_observations)) +
   geom_col(fill = "#176B5B", width = 0.7) +
   scale_x_date(breaks = observations_total$date,date_labels = "%b %d")+ #To include all the dates on the x axis with the month and date
+  scale_y_continuous(labels = scales::comma) +
   labs(
     title = "Number of Observations per Day",
     x = "Date",
     y = "Number of Observations"
   ) +
+  
   theme_mygraphs()
  
 
@@ -161,6 +163,9 @@ week_bar_chart_observations
 # Descriptive Statistics
 ```{r Descriptive-statistics}
 xkablesummary (project, title = "Summary Statistics for Project")
+
+max_value_ridership <- project %>%
+  arrange(desc(ridership))
 ```
 
 ## Clean Data (create columns that will be used for our analysis)

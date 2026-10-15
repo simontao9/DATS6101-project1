@@ -37,6 +37,19 @@ project$fare_class_category <- as.factor(project$fare_class_category)
 project$ridership <- as.numeric(gsub(",", "", project$ridership))
 project$transfers <- as.numeric(gsub(",", "", project$transfers))
 
+# Checking for any NA values
+colSums(is.na(project))
+
+# Checking for duplicates 
+sum(duplicated(project))
+
+str(project)
+
+# Checking for any negative values to make sure there were no stragglers in the data cleaning 
+sum(project$ridership < 0, na.rm = TRUE)
+sum(project$transfers < 0, na.rm = TRUE)
+
+
 # Add 24-hour time column
 project <- project %>%
   mutate(
@@ -82,7 +95,39 @@ project$day_type <- as.factor(project$day_type)
 project$commute_type <- as.factor(project$commute_type)
 ```
 
+For the data cleaning portion, we first converted all the variables to either numeric or factor. We also checked for any NA values as well as duplicates. There were none for either of these, which ordinarily could have been suspicious, however considering that this data was cleaned by the MTA prior to having been uploaded for public downloads, we interpreted this more as a testament to the MTA's strengths.
+
 # EDA
+
+```{r Observations-by-day}
+with_timestamp <- project %>%
+  mutate(timestamp = mdy_hms(transit_timestamp))
+         
+observations_total <- with_timestamp %>%
+  mutate(date = as.Date(timestamp)) %>%
+  count(date, name = "number_of_observations") %>%
+  arrange(date)
+
+observations_total
+
+# Bar chart
+week_bar_chart_observations <- ggplot(observations_total, aes(x = date, y = number_of_observations)) +
+  geom_col(fill = "#176B5B", width = 0.7) +
+  scale_x_date(breaks = observations_total$date,date_labels = "%b %d")+ #To include all the dates on the x axis with the month and date
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "Number of Observations per Day",
+    x = "Date",
+    y = "Number of Observations"
+  ) +
+  
+  theme_mygraphs()
+ 
+week_bar_chart_observations
+```
+
+
+
 
 # Analysis and Interpretation
 
