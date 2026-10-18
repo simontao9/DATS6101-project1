@@ -98,8 +98,8 @@ Specifically, we proposed the following three questions:
 library(tidyverse)
 library(ezids)
 library(car)
-#project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
-project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+# project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
 
 # Data Source and Description
@@ -667,9 +667,14 @@ commute_period_test
 
 At the $\alpha$ = 0.05 level, this test produced a T statistic equal to 8.7228 with 84.945 degrees of freedom. The associated p-value was very small (1.975e-13). Given these findings, there is sufficient evidence to reject the null hypothesis. We are able to conclude that there is a statistically significant difference between the mean hourly ridership in the commute periods versus the non-commute periods.
 
-A further look at the t.test output showed that the mean hourly ridership in the commute group was 250,605 and the mean hourly ridership between the non-commute group was 104,204.5. Additionally, we are 95% confident that the the difference in the mean hourly ridership between the commute and non-commute groups is between 113,029.8 and 179,204.5.
+A further look at the t.test output showed that the mean hourly ridership in the commute group was 250,605 riders per hour and the mean hourly ridership between the non-commute group was 104,204.5 riders per hour. Additionally, we are 95% confident that the the difference in the mean hourly ridership between the commute and non-commute groups is between 113,029.8 and 179,204.5 riders per hour.
 
 **Weekday vs. Weekend t-test**
+
+A second two-sample t-test was conducted to determine if there was a statistically significant difference between the mean hourly ridership on weekdays versus weekends. For this test, the null hypothesis states that the mean hourly ridership on weekdays is equal to the mean hourly ridership on weekends. The alternative hypothesis states that the mean hourly ridership on weekdays is different from the mean hourly ridership on weekdays.
+
+Before conducting the procedure, the assumptions for the test were analyzed. The population standard deviation is unknown because we took a sample of the whole dataset. We also found that the sample size was large enough for the test to be robust against any violations of normality, which comes from the central limit theorem. Since the data represents a series of time, the independent observation may be violated. However, we decided to proceed once again with this t-test.
+
 ```{r Weekday vs. Weekend t-test}
 par(mfrow = c(1, 2))
 qqnorm(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekday"])
@@ -681,6 +686,10 @@ qqline(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekend"])
 weekday_weekend_test <- t.test(total_ridership ~ day_type, data = hourly_ridership)
 weekday_weekend_test
 ```
+
+At the $\alpha$ = 0.05 level, the test produced a T statistic of 4.641 with 152.69 degrees of freedom. The associated p-value was very small (7.411e-06), which allows for the rejection of the null hypothesis. This means that there is sufficient evidence to conclude that the mean hourly ridership on weekdays is significantly different than the mean hourly ridership on weekends.
+
+When looking at the other associated output from the t-test, we can also see that the mean hourly ridership during weekdays is 171,883.8 riders per hour and the mean hourly ridership on weekends is 102,756.6 riders per hour. We are also 95% confident that the difference in mean hourly ridership between weekdays and weekends is between 39,700.86 and 98,553.65 riders per hour.
 
 **ANOVA: Differences in mean hourly ridership between time-of-day categories**
 ```{r Time-of-Day ANOVA}
@@ -730,3 +739,6 @@ borough_post_hoc
 ```
 
 # Conclusions
+**Key Takeaways**
+
+**Limitations**
