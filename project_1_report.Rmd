@@ -1,5 +1,5 @@
 ---
-title: "Project 1 Report: Temporal and Geographic Patterns in New York City Subway Ridership: An Exploratory Analysis of September 15–21, 2024"
+title: "Project 1 Report: New York City Subway Ridership: An Analysis of the Week of September 15-21, 2024"
 author: "Savannah Sauers, Lera Martinez, Simon Tao"
 date: "`r Sys.Date()`"
 output:
@@ -106,10 +106,14 @@ project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MT
 
 Where from? The Metropolitan Transportation Authority (MTA) 
 Area of Focus: Subway ridership in four boroughs: Bronx, Brooklyn, Manhattan, and Queens
+
 Collection by MTA:
 OMNY and MetroCard swipes and taps on entry to MTA system (stations, buses, etc)
 Data cleaned to remove duplication and uses on partner agencies (PATH, etc)
+
 Time-late data due to malfunctioning hardware is incorporated as made available 
+
+## Main Variables of Analysis
 
 | Data Label | Data Type | Data Description |
 |---|---|---|
@@ -147,7 +151,7 @@ sum(project$transfers < 0, na.rm = TRUE)
 
 ```
 
-
+## Created Variables of Analysis
 
 ```{r Data Formatting}
 # Add 24-hour time column
@@ -195,12 +199,18 @@ project$day_type <- as.factor(project$day_type)
 project$commute_type <- as.factor(project$commute_type)
 ```
 
+
+
 # Exploratory Data Analysis
 
 Three main analytic goals, to identify patterns across: 
+
 Time : Which hours/time periods have highest ridership
+
 Days : Weekday/Weekend comparison, commuting periods
+
 Geography : Ridership by borough and high bus-to-subway transfers
+
 
 ## Descriptive Statistics
 
@@ -211,7 +221,7 @@ max_value_ridership <- project %>%
   arrange(desc(ridership))
 ```
 
-## Temporal Patterns in Subway Ridership
+Max value ridership. 
 
 ```{r Observations-by-day}
 with_timestamp <- project %>%
@@ -240,11 +250,391 @@ week_bar_chart_observations <- ggplot(observations_total, aes(x = date, y = numb
 week_bar_chart_observations
 ```
 
+## Overall Patterns in Subway Ridership
+
+
+
+```{r}
+# Week average for total ridership by borough
+borough_ridership_means <- project %>%
+  group_by(borough, transit_timestamp) %>%
+  summarize(hourly_ridership = sum(ridership, na.rm=TRUE), .groups = "drop") %>%
+  group_by(borough) %>%
+  summarize(mean_week_ridership = mean(hourly_ridership, na.rm=TRUE))
+
+borough_ridership_means
+```
+
+Greatest to least mean total ridership by borough: Manhattan, Brooklyn, Queens, Bronx.
+
+This shows the average number of riders in each borough per timestamp. Includes all stations and times of day.
+
+```{r}
+# Week average hourly ridership by station and borough
+station_ridership_means <- project %>%
+  group_by(borough, station_complex_id) %>%
+  summarize(mean_ridership = mean(ridership, na.rm=TRUE)) %>%
+  arrange(desc(mean_ridership))
+
+station_ridership_means
+```
+
+Out of the top 10 stations for mean hourly ridership, 7 of them are in Manhattan, 2 of them are in Queens, and 1 of them is in Brooklyn.
+
+```{r Bar-chart-top-10-busiest-stations}
+
+top_stations <- project %>%
+  group_by(station_complex, station_complex_id, borough) %>%
+  summarize(
+    stations_mean_ridership = mean(ridership, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  slice_max(stations_mean_ridership, n = 10, with_ties = FALSE) #So R does not print all 400+ with_ties=False means exactly 10 (even if multiple stations have the same mean ridership)
+
+ggplot(top_stations,
+       aes(x = reorder(station_complex, stations_mean_ridership),
+           y = stations_mean_ridership, fill = borough)) +
+  geom_col() +
+  coord_flip() + #Long station names are legible
+  scale_fill_manual(
+  values = c(
+    "Bronx"     = "#D09A3A",
+    "Brooklyn"  = "#008C7A",
+    "Manhattan" = "#176B5B",
+    "Queens"    = "#42BFA5" )
+  ) +
+  labs(
+    title = "Top 10 Stations by Average Hourly Ridership",
+    x = "Station",
+    y = "Mean Ridership per Station",
+    fill = "Borough"
+  ) +
+  theme_mygraphs()
+```
+
+```{r Line-graph-daily-ridership-24-hr}
+
+project <- project %>%
+  mutate(
+    timestamp = mdy_hms(transit_timestamp),
+    hour = hour(timestamp)
+  )
+
+#Sum of system ridership for each hour of each day
+daily_hourly_ridership <- project %>%
+  mutate(date = as.Date(timestamp)) %>%
+  group_by(date, hour) %>%
+  summarize(
+    total_ridership = sum(ridership, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+#Line plot
+ggplot(
+  daily_hourly_ridership,
+  aes(
+    x = hour,
+    y = total_ridership,
+    color = factor(date),
+    group = date
+  )
+) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.8) +
+  scale_x_continuous(
+    breaks = 0:23, #To have all the hours displayed
+    labels = sprintf("%02d:00", 0:23) #24 hour format
+  ) +
+  scale_y_continuous(labels = scales::comma) + #Adds commas to the numbers on the axis
+scale_color_manual(
+  values = c(
+    "#176B5B",  # Dark teal
+    "#008C7A",  # Teal
+    "#00A99D",  # Turquoise
+    "#D09A3A",  # Muted gold
+    "#C47A3C",  # Light brown
+    "#6B8E72",  # Sage
+    "#B5C83E"   # Yellow green
+  )
+)+
+  labs(
+    title = "NYC Subway Ridership by Hour for Each Day",
+    x = "Hour of Day",
+    y = "Total System Ridership"
+  ) +
+  theme_mygraphs()+ 
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 9
+    )
+  )
+
+```
+
+```{r Boxplot-graph-system-ridership-by-hour}
+
+ggplot(
+  daily_hourly_ridership,
+  aes(x = factor(hour), y = total_ridership)
+) +
+  geom_boxplot(
+    fill = "#008C7A",
+    color = "#176B5B",
+    alpha = 0.85,
+    outlier.color = "#C47A3C",
+    outlier.alpha = 0.7
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_discrete(
+    labels = sprintf("%02d:00", 0:23)
+  ) +
+  labs(
+    title = "Distribution of Hourly System Ridership",
+    subtitle = "Variation in total ridership across observed days",
+    x = "Hour of Day",
+    y = "Total System Ridership"
+  ) +
+  theme_mygraphs() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      size = 9
+    )
+  )
+
+```
+
+
+```{r Line-graph-average-ridership-24-hr}
+
+#System ridership for each hour across all days (weekend + weekday)
+average_hourly_ridership <- daily_hourly_ridership %>%
+  group_by(hour) %>%
+  summarize(
+    mean_ridership = mean(total_ridership, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+#Line plot
+ggplot(
+  average_hourly_ridership,
+  aes(x = hour, y = mean_ridership)
+) +
+  geom_line(color = "#176B5B", linewidth = 1.3) +
+  geom_point(color = "#176B5B", size = 1.5) +
+  scale_x_continuous(
+    breaks = 0:23,
+    labels = sprintf("%02d:00", 0:23)
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "Average NYC Subway Ridership by Hour",
+    x = "Hour of Day",
+    y = "Average Total System Ridership"
+  ) +
+  theme_mygraphs()+ 
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 9
+    )
+  )
+```
+
 ## Weekday and Weekend Comparisons
+
+```{r Line-graph-weekday-weekend-average-ridership}
+#Sum ridership, then group for type of day, then average of every hour of those groups
+average_by_day_type <- project %>%
+  mutate(date = as.Date(timestamp)) %>%
+  group_by(date, hour, day_type) %>%
+  summarize(
+    total_ridership = sum(ridership, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(day_type, hour) %>%
+  summarize(
+    mean_ridership = mean(total_ridership, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+#Line graph
+ggplot(
+  average_by_day_type,
+  aes(
+    x = hour,
+    y = mean_ridership,
+    color = day_type,
+    group = day_type
+  )
+) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(
+    values = c(
+      "Weekday" = "#00A99D",
+      "Weekend" = "#B5C83E"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = 0:23, 
+    labels = sprintf("%02d:00", 0:23) 
+  ) +
+  scale_y_continuous(labels = scales::comma) + 
+  labs(
+    title = "Average Hourly Ridership: Weekdays vs. Weekends",
+    x = "Hour of Day",
+    y = "Average System-Wide Ridership",
+    color = "Day Type"
+  ) +
+  theme_mygraphs() + 
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 9
+    )
+  )
+
+```
+
+```{r Boxplot-weekday-weekend}
+
+system_hourly_day <- project %>%
+  group_by(timestamp, day_type) %>%
+  summarize(
+    total_ridership = sum(ridership, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+#Plot
+ggplot(system_hourly_day,
+       aes(x = day_type, y = total_ridership, fill = day_type)) +
+  geom_boxplot(alpha = 0.9) +
+  scale_fill_manual(values = c("Weekday" = "#00A99D",
+                               "Weekend" = "#B5C83E")) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "Hourly Ridership Weekdays vs. Weekends",
+    x = "Day Type",
+    y = "Total System Hourly Ridership"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    legend.position = "none"
+  )
+
+```
 
 ## Geographic Differences in Ridership
 
+```{r Hourly-ridership-borough}
+
+borough_hourly <- project %>%
+  group_by(borough, timestamp, hour) %>%
+  summarize(
+    total_ridership = sum(ridership, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(borough, hour) %>%
+  summarize(
+    mean_ridership = mean(total_ridership, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+#Line graph
+ggplot(borough_hourly,
+       aes(x = hour, y = mean_ridership, color = borough)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 1.5) +
+   scale_color_manual(
+   values = c(
+    "Bronx"     = "#6B8E72",
+    "Brooklyn"  = "#008C7A",
+    "Manhattan" = "#176B5B",
+    "Queens"    = "#42BFA5" )
+  ) +
+  scale_x_continuous(
+    breaks = 0:23, 
+    labels = sprintf("%02d:00", 0:23) 
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "Average Hourly Ridership by Borough",
+    x = "Hour of Day",
+    y = "Mean Total Borough Ridership",
+    color = "Borough"
+  ) +
+  theme_mygraphs() + 
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 9
+    )
+  )
+
+```
+
+
 ## Bus-to-Subway Transfers
+
+```{r Ridership-transfer-relationship}
+scatter <- project %>%
+  ggplot(aes(x=ridership, y=transfers, color=borough)) +
+  geom_smooth(method = "lm") + 
+   scale_color_manual(
+  values = c(
+    "Bronx"     = "#6B8E72",
+    "Brooklyn"  = "#008C7A",
+    "Manhattan" = "#176B5B",
+    "Queens"    = "#42BFA5" )
+  ) +
+  labs(
+    title = "Relationship Between Ridership and Transfers by Borough",
+    x = "Ridership",
+    y = "Transfers",
+    color = "Borough"
+  ) +
+  theme_mygraphs()
+  
+
+scatter
+```
+
+Summary Statistics Ridership Transfers 
+Station ridership 
+Station transfers
+```{r Summary-statistics-ridership-transfers}
+#Station ridership
+project %>%
+  summarize(
+    median = median(ridership, na.rm = TRUE),
+    IQR = IQR(ridership, na.rm = TRUE),
+    standard_deviation = sd(ridership, na.rm = TRUE),
+    minimum = min(ridership, na.rm = TRUE),
+    maximum = max(ridership, na.rm = TRUE)
+  )
+
+#Station transfers
+project %>%
+  summarize(
+    median = median(transfers, na.rm = TRUE),
+    IQR = IQR(transfers, na.rm = TRUE),
+    standard_deviation = sd(transfers, na.rm = TRUE),
+    minimum = min(transfers, na.rm = TRUE),
+    maximum = max(transfers, na.rm = TRUE)
+  )
+```
 
 # Analysis and Interpretation
 
