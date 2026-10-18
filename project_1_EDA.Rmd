@@ -931,46 +931,7 @@ project %>%
   ) %>%
   arrange(desc(total_transfers))
 ```
-
-```{r}
-top_transfer_stations <- project %>%
-  group_by(station_complex_id, borough) %>%
-  summarize(
-    total_transfers = sum(transfers, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  arrange(desc(total_transfers)) %>%
-  slice_head(n = 10)
-
-ggplot(top_transfer_stations, aes(x = reorder(station_complex_id, total_transfers), y = total_transfers, fill = borough)) + geom_col()
-```
-
-The top five total transfer stations are Flushing-Main St (7), Jamaica Center-Parsons/Archer (E,J,Z), Kew Gardens-Union Tpke (E,F), 74-Broadway (7)/Jackson Hts-Roosevelt Av (E,F,M,R), Jamaica-179 St (F). There is a drop in total transfers after the Jamaica-179 St.
-
-The five highest transfer stations for the week of Sept 15-21 are also located in Queens.
-
-#Distribution of transfers at top 10 stations by hour
-```{r}
-hourly_transfers <- project %>%
-  semi_join(
-    top_transfer_stations,
-    by = c("station_complex_id")
-  ) %>%
-  group_by(station_complex_id, hour) %>%
-  summarize(
-    mean_transfers = mean(transfers, na.rm = TRUE),
-    .groups = "drop"
-  )
-ggplot(hourly_transfers, aes(x = hour, y = mean_transfers, color = factor(station_complex_id), group = station_complex_id)) + geom_line() + labs(
-  title = "Average Hourly Transfers at Top 10 Transfer Stations",
-  x = "Hour of Day",
-  y = "Mean Number of Transfers",
-  color = "Station Number"
-)
-```
-All 10 stations show a spike in average transfers during the morning commute time. Flushing-Main St. Station shows an elevated transfer rate through the day and evening.
-
-#Hourly transfers by borough in one graph
+#Hourly total transfers by borough in one graph
 ```{r}
 hourly_transfers_total <- project %>%
   group_by(hour, borough) %>%
@@ -978,13 +939,186 @@ hourly_transfers_total <- project %>%
   .groups = "drop"
 )
 
-ggplot(hourly_transfers_total, aes(x = hour, y = total_hourly_transfers, color = borough)) + geom_line() + labs(
+ggplot(hourly_transfers_total, aes(x = hour, y = total_hourly_transfers, color = borough)) + geom_line(lwd = 1) +
+  scale_x_continuous(
+    breaks = 0:23, #To have all the hours displayed
+  ) +
+  scale_y_continuous(labels = scales::comma)+ 
+  scale_color_manual(values = c(
+    "Bronx" = "#6B8E72",
+    "Brooklyn" = "#008C7A",
+    "Manhattan" = "#176B5B",
+    "Queens" = "#42BFA5"
+  )) + 
+  labs(
   title = "Hourly Transfers by Borough",
   x = "Hour of Day",
   y = "Total Transfers within Hour",
   color = "Borough"
 )
 ```
+All boroughs demonstrate a higher amount of total bus-to-subway transfers during the morning hours. Queens clearly shows the highest number of total transfers, while Manhattan has a noticable bimodal distribution, indicating people take the bus to the subway during the morning and evening timeperiods.
+#Where are the top 10 Transfer Stations
+```{r}
+top_transfer_stations <- project %>%
+  group_by(station_complex, borough) %>%
+  summarize(
+    total_transfers = sum(transfers, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(total_transfers)) %>%
+  slice_head(n = 10)
+
+ggplot(top_transfer_stations, aes(x = reorder(station_complex, total_transfers), y = total_transfers, fill = borough)) + geom_col() + scale_fill_manual(values = c(
+  "Bronx" = "#6B8E72",
+  "Brooklyn" = "#008C7A",
+  "Manhattan" = "#176B5B",
+  "Queens" = "#42BFA5"
+)) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+  title = "Top 10 Transfer Stations by Total Transfers Sept. 15-21",
+  x = "Station Complex ID",
+  y = "Total Number of Transfers",
+  fill = "Borough"
+) + 
+  theme(
+  axis.text.x = element_text(
+    angle = 45,
+    hjust = 1,
+    vjust = 1
+  )
+)
+```
+The top five transfer stations for total number of bus-to-subway transfers are Flushing-Main St (7), Jamaica Center-Parsons/Archer (E,J,Z), Kew Gardens-Union Tpke (E,F), 74-Broadway (7)/Jackson Hts-Roosevelt Av (E,F,M,R), Jamaica-179 St (F), which are all in Queens. Additionally, Flushing-Main St, Jamaica Center-Parsons/Archer, Jamaica-179 St, South Ferry/Whitehall St in Manhattan, and Flatbush Av-Brooklyn College in Brooklyn are the last subway stations on their respective lines, indicating people may take the bus from areas outside of subway map coverage.
+```{r}
+#Sum total transfers at top 10 stations for each hour of each day
+daily_hourly_top_transfers <- project %>%
+  filter(station_complex %in% top_transfer_stations$station_complex) %>%
+  mutate(date = as.Date(timestamp)) %>%
+  group_by(date, hour) %>%
+  summarize(
+    total_transfers = sum(transfers, na.rm = TRUE),
+    .groups = "drop"
+  )
+#Line Graph of daily total transfers by hour at top 10 systems
+ggplot(
+  daily_hourly_top_transfers,
+  aes(
+    x = hour,
+    y = total_transfers,
+    color = factor(date),
+    group = date
+  )
+) +
+  geom_line(linewidth = 1) +
+  scale_x_continuous(
+    breaks = 0:23
+  ) +
+  scale_y_continuous(labels = scales::comma) + #Adds commas to the numbers on the axis
+scale_color_manual(
+  values = c(
+    "#176B5B",  # Dark teal
+    "#008C7A",  # Teal
+    "#00A99D",  # Turquoise
+    "#D09A3A",  # Muted gold
+    "#C47A3C",  # Light brown
+    "#6B8E72",  # Sage
+    "#B5C83E"   # Yellow green
+  )
+)+
+  labs(
+    title = "Transfers at Top 10 Stations by Hour for Each Day",
+    x = "Hour of Day",
+    y = "Total Transfers",
+    color = "Date"
+  ) +
+  theme_mygraphs()
+```
+Of the top 10 stations, bus-to-subway transfers during the morning commute are clear on Monday (Sept. 16) to Thursday (Sept. 19).There is a slight curve on Friday (Sept. 20), however, this line is more similar to the Saturday and Sunday lines (Sept. 21 and 15, respectively). This supports that there are difference in morning commuting hours compared to the same time period during the weekend. Additionally, hybrid jobs may allow employees to work remotely on Fridays more often than Monday through Thursday.
+#Distribution of transfers at top 10 stations by hour
+```{r}
+hourly_transfers <- project %>%
+  semi_join(
+    top_transfer_stations,
+    by = c("station_complex")
+  ) %>%
+  group_by(station_complex, hour) %>%
+  summarize(
+    mean_transfers = mean(transfers, na.rm = TRUE),
+    .groups = "drop"
+  )
+ggplot(hourly_transfers, aes(x = hour, y = mean_transfers, color = factor(station_complex), group = station_complex)) + geom_line(linewidth = .75) +
+  scale_color_manual(
+  values = c(
+    "#B84A12",  # Yankee
+    "#288577",  # 74 Broadway
+    "#D96524",  # Flatbush
+    "#164E45",  # Flushing
+    "#65BFA8",  # Forest Hills-71 Ave
+    "#1F6B5B",  # Jamaica Center
+    "#36A397",  # Jamaica - 179 St
+    "#72C47A",  # Kew Gardens
+    "#ED8538",  # Lexington Ave
+    "#F5B461"   # South Ferry
+  )) + 
+  labs(
+    title = "Average Hourly Transfers at Top 10 Transfer Stations",
+    x = "Hour of Day",
+    y = "Mean Number of Transfers",
+    color = "Station Complex"
+  )
+```
+Flushing-Main St. Station shows an elevated transfer rate through the day and evening.
+#Weekend vs Weekday Hourly Transfers at All Stations
+```{r}
+hourly_transfers <- project %>%
+  mutate(
+    hour = hour(timestamp),
+    day_type = if_else(
+      wday(timestamp) %in% c(1, 7),
+      "Weekend",
+      "Weekday"
+    )
+  ) %>%
+  group_by(day_type, hour) %>%
+  summarize(
+    total_transfers = sum(transfers, na.rm = TRUE),
+    .groups = "drop"
+  )
+ggplot(
+  hourly_transfers,
+  aes(
+    x = hour,
+    y = total_transfers,
+    color = day_type,
+    group = day_type
+  )
+) +
+  geom_line(linewidth = 1.2) +
+  scale_color_manual(
+    values = c(
+      "Weekday" = "#176B5B",
+      "Weekend" = "#D09A3A"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = 0:23,
+  ) +
+  scale_y_continuous(
+    labels = scales::comma
+  ) +
+  labs(
+    title = "Hourly Transfers at All Stations",
+    subtitle = "Weekday vs. Weekend",
+    x = "Hour of Day",
+    y = "Total Transfers",
+    color = "Day Type"
+  ) +
+  theme_mygraphs()
+
+```
+Similar to the Top 10 Subway Stations comparison, there's a clear difference between weekend and weekday bus-to-subway transfers. Additionally, there is once again a clear increase in the number of people using buses to transfer at subway stations during the morning weekday commute times in comparison to the evening commute times.
 #QQ Plots for Ridership by Borough
 ```{r}
 hourly_transfers_total <- project %>%
@@ -1005,7 +1139,82 @@ for (b in boroughs) {
          xlab = "Theoretical Quantiles",
          ylab = "Sample Quantiles")
 
-  qqline(borough_data, col = "red", lwd = 2)
+  qqline(borough_data, col = "#72C47A", lwd = 2)
 }
 par(mfrow = c(1, 1))
 ```
+All boroughs do not have a normal distribution of transfers. There are extreme points in the upper right quadrant in the Bronx, Brooklyn, and Queens, likely indicating an extremely low number of people taking the bus to the subway late in the evening. All boroughs show extreme values in the lower left quadrant, indicating few people take the bus to the subway during the early hours of the day. The step in the middle of the the graphs may indicate steep decrease following the morning commute followed by a more gradual decrease.
+#Hypothesis Testing of Transfers
+Questions of interest:
+
+- Which hours have the highest transfers average (weekdays vs. weekends)? 
+
+- Do these hours correspond to commuting periods? 
+  
+**T-Tests: Commute vs. Non-commute; Weekday vs. Weekend**
+```{r}
+hourly_transfers <- project %>%
+  mutate(commute_period = if_else(commute_type %in% c("Morning Commute", "Evening Commute"), "Commute","Non-Commute")) %>%
+  group_by(timestamp, day_type, time_of_day, commute_period) %>%
+  summarize(total_transfers = sum(transfers, na.rm = TRUE), .groups = "drop")
+
+hourly_transfers
+```
+
+Commute vs. Non-commute time periods:
+```{r}
+qqnorm(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Commute"])
+qqline(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Commute"], col = "#B84A12", lwd = 2)
+```
+
+```{r}
+qqnorm(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Non-Commute"])
+qqline(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Non-Commute"], col = "#B84A12", lwd = 2)
+```
+
+Weekday vs. Weekend periods:
+```{r}
+qqnorm(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekday"])
+qqline(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekday"], col = "#B84A12", lwd = 2)
+```
+
+```{r}
+qqnorm(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekend"])
+qqline(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekend"], col = "#B84A12", lwd = 2)
+```
+
+Assumptions check for t-tests:
+
+- Commute vs. Non-commute time
+  - Population SD unknown
+  - Sample size is large enough (per the CLT) for the test to be robust against normality violations
+  - Independent observation assumption may be violated due to time data, but continue with t-test for this class
+
+- Weekday vs. Weekend
+  - Population SD unknown
+  - Sample size is large enough (per the CLT) for the test to be robust against normality violations
+  - Independent observation assumption may be violated due to time data, but continue with t-test for this class
+  
+```{r}
+# t-test for commute time vs. non-commute time means
+commute_period_test <- t.test(total_transfers ~ commute_period, data = hourly_transfers)
+commute_period_test
+```
+
+Null hypothesis: Mean hourly ridership of commute periods = Mean hourly ridership of non-commute periods
+
+Alternative hypothesis: Mean hourly ridership of commute periods ≠ Mean hourly ridership of non-commute periods
+
+Alpha = 0.05 > P-value = 1e-08 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly transfers amounts during commute periods is different that the mean hourly transfers amounts during non-commute
+
+```{r}
+# t-test for weekday vs. weekend means
+weekday_weekend_test <- t.test(total_transfers ~ day_type, data = hourly_transfers)
+weekday_weekend_test
+```
+
+Null hypothesis: Mean hourly ridership of Weekdays = Mean hourly ridership of weekends
+
+Alternative hypothesis: Mean hourly ridership of Weekdays ≠ Mean hourly ridership of weekends
+
+Alpha = 0.05 > P-value = 4e-06 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly ridership on weekdays is different that the mean hourly ridership of weekends
