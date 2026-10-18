@@ -1,5 +1,5 @@
 ---
-title: "Project 1 Report"
+title: "Project 1 Report: Temporal and Geographic Patterns in New York City Subway Ridership: An Exploratory Analysis of September 15–21, 2024"
 author: "Savannah Sauers, Lera Martinez, Simon Tao"
 date: "`r Sys.Date()`"
 output:
@@ -15,19 +15,115 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction and Data Description
+```{r Visual-scheme, include=FALSE}
+
+my_colors <- c(
+  "Dark teal"   = "#176B5B",
+  "Teal"        = "#008C7A",
+  "Turquoise"   = "#00A99D",
+  "Sea green"   = "#42BFA5",
+  "Soft green"  = "#72C47A",
+  "Fresh green" = "#9BC53D",
+  "Yellow green"= "#B5C83E",
+  "Muted gold"  = "#D09A3A",
+  "Light brown"  = "#C47A3C",
+  "Sage"        = "#6B8E72"
+)
+
+#Reusable graph theme https://rfortherestofus.com/2025/04/ggplot2-theme
+theme_mygraphs <- function(base_size = 12,
+                           base_family = "Arial") {
+  theme_minimal(
+    base_size = base_size,
+    base_family = base_family
+  ) +
+    theme(
+      plot.title = element_text(
+        size = 15,
+        face = "bold",
+        color = "#222222",
+        hjust = 0.5,
+        margin = margin(b = 10)
+      ),
+      plot.subtitle = element_text(
+        size = 11,
+        color = "#555555",
+        hjust = 0.5
+      ),
+      axis.title = element_text(
+        size = 11,
+        face = "bold",
+        color = "#222222"
+      ),
+      axis.text = element_text(
+        size = 10,
+        color = "#333333"
+      ),
+         # Spacing
+      plot.title.position = "plot",
+      plot.margin = margin(10, 12, 10, 12
+                           ),   
+      # Gridlines
+      panel.grid.major = element_line(
+        color = "#E8E8E8",
+        linewidth = 0.4
+      ),
+      panel.grid.minor = element_blank(),
+      # Legends
+      legend.position = "bottom",
+      legend.title = element_text(
+        face = "bold",
+        size = 10
+      ),
+      legend.text = element_text(
+        size = 10
+      ),
+      legend.background = element_blank()
+      )
+}
+```
+
+
+# Introduction
 New York City has the largest subway system in the United States, and it serves as an essential part of the city's public infrastructure. There are many benefits to widespread public transportation systems, but maximizing their effectiveness requires an understanding of how people use public transit in their everyday lives.
 
 This exploration and analysis specifically examines New York City's subway ridership in Manhattan, Brooklyn, the Bronx, and Queens during the week of September 15-21, 2024. This specific week was chosen because we felt it was likely going to be the best representation of a relatively normal week, meaning there are no holidays, school is in session, and it is not off season.
 
-Specifically, we proposed the following three questions: “How do NYC subway ridership volumes vary throughout the day?”, "Which hours have the highest ridership average (weekdays vs. weekends)?", and "Do these hours correspond to commuting periods?"
+Specifically, we proposed the following three questions: 
+“How do NYC subway ridership volumes vary throughout the day?”
+"Which hours have the highest ridership average (weekdays vs. weekends)?"
+"Do these hours correspond to commuting periods?"
 
 ```{r Read in packages and data, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(ezids)
 library(car)
-project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+#project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
+
+# Data Source and Description
+
+Where from? The Metropolitan Transportation Authority (MTA) 
+Area of Focus: Subway ridership in four boroughs: Bronx, Brooklyn, Manhattan, and Queens
+Collection by MTA:
+OMNY and MetroCard swipes and taps on entry to MTA system (stations, buses, etc)
+Data cleaned to remove duplication and uses on partner agencies (PATH, etc)
+Time-late data due to malfunctioning hardware is incorporated as made available 
+
+| Data Label | Data Type | Data Description |
+|---|---|---|
+| transit_timestamp | DATE | Rounded down to nearest hour (Swipe at 1:37pm will be reported as 1pm) |
+| station_complex_id | ALPHANUMERIC | A unique identifier for station complexes |
+| station_complex | TEXT | Subway complex where an entry swipe or tap took place. Large subway complexes have multiple lines |
+| borough | TEXT | Bronx, Brooklyn, Manhattan, Queens |
+| ridership | NUMERIC | Total number of riders that entered a subway complex |
+| transfers | NUMERIC | Number of individuals who entered a subway complex via a free bus-to-subway or free out-of-network transfer. These transfers are included in total ridership. Transfers within a subway complex (e.g., transferring from the 2 to the 4 train within Atlantic Avenue) are not captured here. |
+
+
+## Data Quality and Cleaning
+
+For the data cleaning portion, we first converted all the variables to either numeric or factor. We also checked for any NA values as well as duplicates. There were none for either of these, which ordinarily could have been suspicious, however considering that this data was cleaned by the MTA prior to having been uploaded for public downloads, we interpreted this more as a testament to the MTA's strengths.
 
 ```{r Data Cleaning}
 # Make sure columns are cast to correct types
@@ -49,7 +145,11 @@ str(project)
 sum(project$ridership < 0, na.rm = TRUE)
 sum(project$transfers < 0, na.rm = TRUE)
 
+```
 
+
+
+```{r Data Formatting}
 # Add 24-hour time column
 project <- project %>%
   mutate(
@@ -95,9 +195,23 @@ project$day_type <- as.factor(project$day_type)
 project$commute_type <- as.factor(project$commute_type)
 ```
 
-For the data cleaning portion, we first converted all the variables to either numeric or factor. We also checked for any NA values as well as duplicates. There were none for either of these, which ordinarily could have been suspicious, however considering that this data was cleaned by the MTA prior to having been uploaded for public downloads, we interpreted this more as a testament to the MTA's strengths.
+# Exploratory Data Analysis
 
-# EDA
+Three main analytic goals, to identify patterns across: 
+Time : Which hours/time periods have highest ridership
+Days : Weekday/Weekend comparison, commuting periods
+Geography : Ridership by borough and high bus-to-subway transfers
+
+## Descriptive Statistics
+
+```{r Descriptive-statistics}
+xkablesummary (project, title = "Summary Statistics for Project")
+
+max_value_ridership <- project %>%
+  arrange(desc(ridership))
+```
+
+## Temporal Patterns in Subway Ridership
 
 ```{r Observations-by-day}
 with_timestamp <- project %>%
@@ -126,8 +240,11 @@ week_bar_chart_observations <- ggplot(observations_total, aes(x = date, y = numb
 week_bar_chart_observations
 ```
 
+## Weekday and Weekend Comparisons
 
+## Geographic Differences in Ridership
 
+## Bus-to-Subway Transfers
 
 # Analysis and Interpretation
 
