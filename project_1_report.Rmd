@@ -749,7 +749,8 @@ ggplot(hourly_transfers_total, aes(x = hour, y = total_hourly_transfers, color =
   x = "Hour of Day",
   y = "Total Transfers within Hour",
   color = "Borough"
-)
+)+ 
+  theme_mygraphs()
 ```
 
 All boroughs demonstrate a higher amount of total bus-to-subway transfers during the morning hours. Queens clearly shows the highest number of total transfers, while Manhattan has a noticeable bimodal distribution, indicating people take the bus to the subway during the morning and evening time periods.
@@ -777,14 +778,20 @@ ggplot(top_transfer_stations, aes(x = reorder(station_complex, total_transfers),
   x = "Station Complex ID",
   y = "Total Number of Transfers",
   fill = "Borough"
-) + 
+) +
+  theme_mygraphs()+ 
   theme(
   axis.text.x = element_text(
-    angle = 45,
+    angle = 40,
     hjust = 1,
-    vjust = 1
-  )
-)
+    vjust = 1,
+    size = 5
+  ),
+  axis.text.y = element_text(size = 8),
+  axis.title.x = element_text(size = 7),
+  axis.title.y = element_text(size = 7)
+) 
+  
 ```
 
 The top five transfer stations for total number of bus-to-subway transfers are Flushing-Main St (7), Jamaica Center-Parsons/Archer (E,J,Z), Kew Gardens-Union Tpke (E,F), 74-Broadway (7)/Jackson Hts-Roosevelt Av (E,F,M,R), Jamaica-179 St (F), which are all in Queens. Additionally, Flushing-Main St, Jamaica Center-Parsons/Archer, Jamaica-179 St, South Ferry/Whitehall St in Manhattan, and Flatbush Av-Brooklyn College in Brooklyn are the last subway stations on their respective lines, indicating people may take the bus from areas outside of subway map coverage.
@@ -867,7 +874,15 @@ ggplot(hourly_transfers, aes(x = hour, y = mean_transfers, color = factor(statio
     x = "Hour of Day",
     y = "Mean Number of Transfers",
     color = "Station Complex"
-  )
+  )+
+  theme_mygraphs() + 
+  theme(
+  legend.position = "right",
+  legend.text = element_text(size = 8),
+  legend.title = element_text(size = 9),
+  legend.key.size = unit(0.4, "cm")
+)
+
 ```
 
 Flushing-Main St. Station shows an elevated transfer rate through the day and evening.
