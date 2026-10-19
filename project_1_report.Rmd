@@ -105,13 +105,7 @@ project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MT
 
 This project uses an hourly NYC subway ridership dataset published by the Metropolitan Transportation Authority (MTA) during the full seven-day week of September 15–21, 2024 ($N = 553,429$ observations). The dataset was obtained from https://data.ny.gov/Transportation/MTA-Subway-Hourly-Ridership-2020-2024/wujg-7c2s/about_data.
 
-Our area of focus is: Subway ridership in four boroughs: Bronx, Brooklyn, Manhattan, and Queens.
-
-Data Collection Method: Passenger entries were recorded automatically via turnstile swipes (MetroCard) and contactless taps (OMNY) at 424 station complexes across Manhattan, Brooklyn, Queens, and the Bronx
-
-Data cleaned to remove duplication and uses on partner agencies (PATH, etc).
-
-Time-late data due to malfunctioning hardware is incorporated as made available.
+Our area of focus is subway ridership in the four boroughs: Bronx, Brooklyn, Manhattan, and Queens. The data collection method from the MTA is that passenger entries were recorded automatically via turnstile swipes (MetroCard) and contactless taps (OMNY) at 424 station complexes across the boroughs. The data was then cleaned to remove duplication and uses on partner agencies (PATH, etc). Time-late data due to malfunctioning hardware is incorporated as made available.
 
 **Main Variables of Analysis**
 
