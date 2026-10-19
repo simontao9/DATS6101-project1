@@ -779,7 +779,7 @@ project %>%
   ) %>%
   arrange(desc(total_transfers))
 ```
-#Hourly total transfers by borough in one graph
+
 ```{r}
 hourly_transfers_total <- project %>%
   group_by(hour, borough) %>%
@@ -806,7 +806,7 @@ ggplot(hourly_transfers_total, aes(x = hour, y = total_hourly_transfers, color =
 )
 ```
 All boroughs demonstrate a higher amount of total bus-to-subway transfers during the morning hours. Queens clearly shows the highest number of total transfers, while Manhattan has a noticeable bimodal distribution, indicating people take the bus to the subway during the morning and evening time periods.
-#Where are the top 10 Transfer Stations
+# Where are the top ten stations for bus transfers?
 ```{r}
 top_transfer_stations <- project %>%
   group_by(station_complex, borough) %>%
@@ -839,8 +839,9 @@ ggplot(top_transfer_stations, aes(x = reorder(station_complex, total_transfers),
 )
 ```
 The top five transfer stations for total number of bus-to-subway transfers are Flushing-Main St (7), Jamaica Center-Parsons/Archer (E,J,Z), Kew Gardens-Union Tpke (E,F), 74-Broadway (7)/Jackson Hts-Roosevelt Av (E,F,M,R), Jamaica-179 St (F), which are all in Queens. Additionally, Flushing-Main St, Jamaica Center-Parsons/Archer, Jamaica-179 St, South Ferry/Whitehall St in Manhattan, and Flatbush Av-Brooklyn College in Brooklyn are the last subway stations on their respective lines, indicating people may take the bus from areas outside of subway map coverage.
+
+# Sum total transfers at top 10 stations for each hour of each day
 ```{r}
-#Sum total transfers at top 10 stations for each hour of each day
 daily_hourly_top_transfers <- project %>%
   filter(station_complex %in% top_transfer_stations$station_complex) %>%
   mutate(date = as.Date(timestamp)) %>%
@@ -994,12 +995,7 @@ par(mfrow = c(1, 1))
 All boroughs do not have a normal distribution of transfers. There are extreme points in the upper right quadrant in the Bronx, Brooklyn, and Queens, likely indicating an extremely low number of people taking the bus to the subway late in the evening. All boroughs show extreme values in the lower left quadrant, indicating few people take the bus to the subway during the early hours of the day. The step in the middle of the graphs may indicate a steep decrease following the morning commute, followed by a more gradual decrease.
 
 # Hypothesis Testing of Transfers
-Questions of interest:
-
-- Which hours have the highest average transfers (weekdays vs. weekends)? 
-
-- Do these hours correspond to commuting periods?
-Regarding transfers, we had two 
+Our primary questions of interest regarding transfers are whether there is a normal distribution of bus-to-subway transfers during 1) commuting periods vs non-commuting periods and 2) during weekdays vs weekends. Additionally, are transfer amounts the same during commuting periods vs non-commuting periods as well as during the week in comparison to the weekend.
   
 **T-Tests: Commute vs. Non-commute; Weekday vs. Weekend**
 ```{r}
