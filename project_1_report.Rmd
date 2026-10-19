@@ -745,7 +745,7 @@ summary(borough_anova)
 borough_post_hoc <- TukeyHSD(borough_anova)
 borough_post_hoc
 ```
-# Transfers EDA, total and average bus to station transfers
+# Bus-to-Subway Transfers
 ```{r}
 project %>%
   group_by(station_complex, station_complex_id) %>%
@@ -895,7 +895,7 @@ ggplot(hourly_transfers, aes(x = hour, y = mean_transfers, color = factor(statio
   )
 ```
 Flushing-Main St. Station shows an elevated transfer rate through the day and evening.
-#Weekend vs Weekday Hourly Transfers at All Stations
+# Weekend vs Weekday Hourly Transfers at All Stations
 ```{r}
 hourly_transfers <- project %>%
   mutate(
@@ -970,7 +970,7 @@ par(mfrow = c(1, 1))
 ```
 All boroughs do not have a normal distribution of transfers. There are extreme points in the upper right quadrant in the Bronx, Brooklyn, and Queens, likely indicating an extremely low number of people taking the bus to the subway late in the evening. All boroughs show extreme values in the lower left quadrant, indicating few people take the bus to the subway during the early hours of the day. The step in the middle of the graphs may indicate a steep decrease following the morning commute, followed by a more gradual decrease.
 
-#Hypothesis Testing of Transfers
+# Hypothesis Testing of Transfers
 Questions of interest:
 
 - Which hours have the highest average transfers (weekdays vs. weekends)? 
@@ -993,11 +993,11 @@ Commute vs. Non-commute time periods:
 qqnorm(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Commute"])
 qqline(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Commute"], col = "#B84A12", lwd = 2)
 ```
-
 ```{r}
 qqnorm(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Non-Commute"])
 qqline(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Non-Commute"], col = "#B84A12", lwd = 2)
 ```
+Non-commute transfers have a more normal distribution than transfers during commuting hours, but both time periods have extreme values. 
 
 Weekday vs. Weekend periods:
 ```{r}
@@ -1009,18 +1009,10 @@ qqline(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekday"],
 qqnorm(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekend"])
 qqline(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekend"], col = "#B84A12", lwd = 2)
 ```
+Both distributions of transfers during the weekend and weekday are not normal, as evidenced by the extreme values and limited adherence to the Q-Q plot line.
 
-Assumptions check for t-tests:
-
-- Commute vs. Non-commute time
-  - Population SD unknown
-  - Sample size is large enough (per the CLT) for the test to be robust against normality violations
-  - Independent observation assumption may be violated due to time data, but continue with t-test for this class
-
-- Weekday vs. Weekend
-  - Population SD unknown
-  - Sample size is large enough (per the CLT) for the test to be robust against normality violations
-  - Independent observation assumption may be violated due to time data, but continue with t-test for this class
+Assumptions for T-Tests:
+For the t-tests evaluating commuting time periods and weekend vs. weekday transfer amounts, we assumed the sample size was large enough to be robust against normality violations. Additionally, the population standard deviation is unknown, ruling out the z-test. While the independent observation assumption may be violated due to time data, the t-test is preferred for this class.
   
 ```{r}
 # t-test for commute time vs. non-commute time means
