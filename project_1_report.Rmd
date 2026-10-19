@@ -1010,7 +1010,7 @@ Null hypothesis: Mean hourly transfers of commute periods = Mean hourly transfer
 
 Alternative hypothesis: Mean hourly transfers of commute periods ≠ Mean hourly transfers of non-commute periods
 
-Alpha = 0.05 > P-value = 1e-08 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly transfer amounts during commute periods are different from the mean hourly transfer amounts during non-commute periods
+Because $\alpha$ = 0.05 > P-value = 1e-08, we can reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly transfer amounts during commute periods are different from the mean hourly transfer amounts during non-commute periods
 
 ```{r}
 # t-test for weekday vs. weekend means
@@ -1022,7 +1022,7 @@ Null hypothesis: Mean hourly transfers on weekdays = Mean hourly transfers on we
 
 Alternative hypothesis: Mean hourly transfers on weekdays ≠ Mean hourly transfers on weekends
 
-Alpha = 0.05 > P-value = 4e-06 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly ridership on weekdays is different from the mean hourly ridership on weekends
+Since $\alpha$ = 0.05 > P-value = 4e-06, we can reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly ridership on weekdays is different from the mean hourly ridership on weekends
 
 # Conclusions
 
