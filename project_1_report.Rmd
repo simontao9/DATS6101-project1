@@ -98,22 +98,25 @@ Specifically, we proposed the following three questions:
 library(tidyverse)
 library(ezids)
 library(car)
-project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
-# project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+# project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
 
 # Data Source and Description
 
-Where from? The Metropolitan Transportation Authority (MTA) 
-Area of Focus: Subway ridership in four boroughs: Bronx, Brooklyn, Manhattan, and Queens
+This project uses an hourly NYC subway ridership dataset published by the Metropolitan Transportation Authority (MTA) during the full seven-day week of September 15–21, 2024 ($N = 553,429$ observations). The dataset was obtained from https://data.ny.gov/Transportation/MTA-Subway-Hourly-Ridership-2020-2024/wujg-7c2s/about_data.
 
-Collection by MTA:
-OMNY and MetroCard swipes and taps on entry to MTA system (stations, buses, etc)
-Data cleaned to remove duplication and uses on partner agencies (PATH, etc)
+Our area of focus is: Subway ridership in four boroughs: Bronx, Brooklyn, Manhattan, and Queens.
 
-Time-late data due to malfunctioning hardware is incorporated as made available 
+Data Collection Method: Passenger entries were recorded automatically via turnstile swipes (MetroCard) and contactless taps (OMNY) at 424 station complexes across Manhattan, Brooklyn, Queens, and the Bronx
+
+Data cleaned to remove duplication and uses on partner agencies (PATH, etc).
+
+Time-late data due to malfunctioning hardware is incorporated as made available.
 
 ## Main Variables of Analysis
+
+These are the following main variables of analysis that we will be using from the original MTA dataset.
 
 | Data Label | Data Type | Data Description |
 |---|---|---|
@@ -122,8 +125,7 @@ Time-late data due to malfunctioning hardware is incorporated as made available
 | station_complex | TEXT | Subway complex where an entry swipe or tap took place. Large subway complexes have multiple lines |
 | borough | TEXT | Bronx, Brooklyn, Manhattan, Queens |
 | ridership | NUMERIC | Total number of riders that entered a subway complex |
-| transfers | NUMERIC | Number of individuals who entered a subway complex via a free bus-to-subway or free out-of-network transfer. These transfers are included in total ridership. Transfers within a subway complex (e.g., transferring from the 2 to the 4 train within Atlantic Avenue) are not captured here. |
-
+| transfers | NUMERIC | Number of individuals who entered a subway complex via a free bus-to-subway or free out-of-network transfer. These transfers are included in total ridership. Transfers within a subway complex (e.g., transferring from the 2 to the 4 train within Atlantic Avenue) are not captured here |
 
 ## Data Quality and Cleaning
 
@@ -214,6 +216,7 @@ Geography : Ridership by borough and high bus-to-subway transfers
 
 ## Descriptive Statistics
 
+
 ```{r Descriptive-statistics}
 xkablesummary (project, title = "Summary Statistics for Project")
 
@@ -221,7 +224,8 @@ max_value_ridership <- project %>%
   arrange(desc(ridership))
 ```
 
-Max value ridership. 
+This dataset contains 553,429 station-hour records across 424 station complexes in the four boroughs. The core numerical metrics evaluated are total ridership (station entries) and transfers (intermodal bus-to-subway entries, which represent a sub-category contained within total ridership). The maximum value of ridership is one to point out reaching 14012 taps, within one hour at one station, with a minimum of 1 a very striking spread.
+
 
 ```{r Observations-by-day}
 with_timestamp <- project %>%
@@ -250,9 +254,11 @@ week_bar_chart_observations <- ggplot(observations_total, aes(x = date, y = numb
 week_bar_chart_observations
 ```
 
+The number of observations recorded on each date was also examined to assess consistency in data coverage. Daily observation counts remain highly stable between ~72,000 (Sunday, Sept 15) and ~81,000 (weekdays). 
+
+This confirms balanced, uninterrupted data recording across all 168 temporal hours of the study window.
+
 ## Overall Patterns in Subway Ridership
-
-
 
 ```{r}
 # Week average for total ridership by borough
@@ -311,6 +317,8 @@ ggplot(top_stations,
   ) +
   theme_mygraphs()
 ```
+
+
 
 ```{r Line-graph-daily-ridership-24-hr}
 
