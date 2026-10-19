@@ -1062,6 +1062,11 @@ Alternative hypothesis: Mean hourly transfers on weekdays ≠ Mean hourly transf
 Alpha = 0.05 > P-value = 4e-06 --> Reject the null hypothesis. There is sufficient evidence to conclude that the mean hourly ridership on weekdays is different from the mean hourly ridership on weekends
 
 # Conclusions
+
 **Key Takeaways**
 
+Based on the EDA and analysis that was performed on this dataset, we were able to make some conclusions regarding subway ridership in New York City during the week of September 15-21, 2024. We found that many factors can influence the demand of subway ridership, such as time of day, type of day (weekdays vs. weekends), and borough. Specifically, we found that ridership varies throughout the day with commute versus non-commute periods. This is consistent with the expected commuting behavior that we hypothesized before running the analysis. We were also able to see that ridership varies by borough. Lastly, we were able to conclude that a lot of the transfer activity is concentrated in Queens, which makes sense because of the population that commutes into the city to work from Long Island.
+
 **Limitations**
+
+Even though we were able to draw conclusions after analyzing our data, it is important to note that there are some limitations to the analysis. First, many of the hypothesis test assumptions were not strongly satisfied at times. There may be better statistical tests to run on our data, but we stayed with t-tests and ANOVA tests because they are the tools that we know. Additionally, it is unclear if potential construction and/or closures in the subway system affected our data for the chosen week. This is not something that we were able to explore in the data, but it is a possibility that there could have been some effects from this. The data also only captures riders that pay at the turnstile when coming into the station, so ridership for individuals who do not pay was not able to be captured. Lastly, the findings from our analysis are the most generalizable to the specific week of September 15-21, 2024. Further analysis could be done during a range of different or longer time periods to consider results that may be more generalizable.
