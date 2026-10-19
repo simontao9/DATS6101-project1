@@ -126,7 +126,7 @@ These are the following main variables of analysis that we will be using from th
 | ridership | NUMERIC | Total number of riders that entered a subway complex |
 | transfers | NUMERIC | Number of individuals who entered a subway complex via a free bus-to-subway or free out-of-network transfer. These transfers are included in total ridership. Transfers within a subway complex (e.g., transferring from the 2 to the 4 train within Atlantic Avenue) are not captured here |
 
-## Data Quality and Cleaning
+# Data Quality and Cleaning
 
 For the data cleaning portion, we first converted all the variables to either numeric or factor. We also checked for any NA values as well as duplicates. There were none for either of these, which ordinarily could have been suspicious, however considering that this data was cleaned by the MTA prior to having been uploaded for public downloads, we interpreted this more as a testament to the MTA's strengths.
 
@@ -439,7 +439,7 @@ ggplot(
   )
 ```
 
-## Weekday and Weekend Comparisons
+**Weekday and Weekend Comparisons**
 ```{r Line-graph-weekday-weekend-average-ridership}
 #Sum ridership, then group for type of day, then average of every hour of those groups
 average_by_day_type <- project %>%
@@ -526,7 +526,6 @@ ggplot(system_hourly_day,
 ```
 
 **Geographic Differences in Ridership**
-
 ```{r Hourly-ridership-borough}
 
 borough_hourly <- project %>%
@@ -645,9 +644,9 @@ hourly_ridership <- project %>%
 
 par(mfrow = c(1, 2))
 qqnorm(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Commute"])
-qqline(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Commute"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Commute"], col = "#72C47A", lwd = 2)
 qqnorm(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Non-Commute"])
-qqline(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Non-Commute"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$commute_period == "Non-Commute"], col = "#72C47A", lwd = 2)
 
 # t-test for commute time vs. non-commute time means
 commute_period_test <- t.test(total_ridership ~ commute_period, data = hourly_ridership)
@@ -667,9 +666,9 @@ Before conducting the procedure, the assumptions for the test were analyzed. The
 ```{r Weekday vs. Weekend t-test}
 par(mfrow = c(1, 2))
 qqnorm(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekday"])
-qqline(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekday"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekday"], col = "#72C47A", lwd = 2)
 qqnorm(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekend"])
-qqline(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekend"])
+qqline(hourly_ridership$total_ridership[hourly_ridership$day_type == "Weekend"], col = "#72C47A", lwd = 2)
 
 # t-test for weekday vs. weekend means
 weekday_weekend_test <- t.test(total_ridership ~ day_type, data = hourly_ridership)
@@ -694,7 +693,7 @@ par(mfrow = c(2, 2))
 for (time_category in unique(hourly_ridership$time_of_day)) {
   x <- hourly_ridership$total_ridership[hourly_ridership$time_of_day == time_category]
   qqnorm(x, main = paste("Q-Q Plot:", time_category))
-  qqline(x)
+  qqline(x, col = "#72C47A", lwd = 2)
 }
 
 leveneTest(total_ridership ~ time_of_day, data = hourly_ridership)
@@ -731,7 +730,7 @@ par(mfrow = c(2, 2))
 for (b in unique(borough_daily$borough)) {
   x <- borough_daily$total_ridership[borough_daily$borough == b]
   qqnorm(x, main = paste("Q-Q Plot:", b))
-  qqline(x)
+  qqline(x, col = "#72C47A", lwd = 2)
 }
 
 leveneTest(total_ridership ~ borough, data = borough_daily)
@@ -986,6 +985,7 @@ par(mfrow = c(1, 1))
 All boroughs do not have a normal distribution of transfers. There are extreme points in the upper right quadrant in the Bronx, Brooklyn, and Queens, likely indicating an extremely low number of people taking the bus to the subway late in the evening. All boroughs show extreme values in the lower left quadrant, indicating few people take the bus to the subway during the early hours of the day. The step in the middle of the graphs may indicate a steep decrease following the morning commute, followed by a more gradual decrease.
 
 **Hypothesis Testing of Transfers**
+
 Our primary questions of interest regarding transfers are whether there is a normal distribution of bus-to-subway transfers during 1) commuting periods vs non-commuting periods and 2) during weekdays vs weekends. Additionally, are transfer amounts the same during commuting periods vs non-commuting periods as well as during the week in comparison to the weekend.
   
 **T-Tests: Commute vs. Non-commute; Weekday vs. Weekend**
