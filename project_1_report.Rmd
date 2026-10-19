@@ -97,8 +97,8 @@ Specifically, we proposed the following three questions:
 library(tidyverse)
 library(ezids)
 library(car)
-project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
-# project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+#project <- read.csv("~/Desktop/Fall 2026/DATS6101/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
+project <- read.csv("~/Desktop/Cloning-Git/DATS6101-project1/DATS6101_Project_MTA_Subway_Hourly_Ridership.csv")
 ```
 
 # Data Source and Description
@@ -201,13 +201,13 @@ project$commute_type <- as.factor(project$commute_type)
 
 # Exploratory Data Analysis
 
-Three main analytic goals, to identify patterns across: 
+The EDA had three main analytic goals, to identify patterns across: 
 
-Time : Which hours/time periods have highest ridership
+- Time: Which hours/time periods have highest ridership
 
-Days : Weekday/Weekend comparison, commuting periods
+- Days: Weekday/Weekend comparison, commuting periods
 
-Geography : Ridership by borough and high bus-to-subway transfers
+- Geography: Ridership by borough and high bus-to-subway transfers
 
 
 **Descriptive Statistics**
@@ -263,9 +263,7 @@ borough_ridership_means <- project %>%
 borough_ridership_means
 ```
 
-Greatest to least mean total ridership by borough: Manhattan, Brooklyn, Queens, Bronx.
-
-This shows the average number of riders in each borough per timestamp. Includes all stations and times of day.
+This shows the average number of riders in each borough per timestamp. Includes all stations and times of day. The greatest to least mean total ridership by borough: Manhattan, Brooklyn, Queens, Bronx. 
 
 ```{r}
 # Week average hourly ridership by station and borough
@@ -278,36 +276,6 @@ station_ridership_means
 ```
 
 Out of the top 10 stations for mean hourly ridership, 7 of them are in Manhattan, 2 of them are in Queens, and 1 of them is in Brooklyn.
-
-```{r Bar-chart-top-10-busiest-stations}
-top_stations <- project %>%
-  group_by(station_complex, station_complex_id, borough) %>%
-  summarize(
-    stations_mean_ridership = mean(ridership, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  slice_max(stations_mean_ridership, n = 10, with_ties = FALSE) #So R does not print all 400+ with_ties=False means exactly 10 (even if multiple stations have the same mean ridership)
-
-ggplot(top_stations,
-       aes(x = reorder(station_complex, stations_mean_ridership),
-           y = stations_mean_ridership, fill = borough)) +
-  geom_col() +
-  coord_flip() + #Long station names are legible
-  scale_fill_manual(
-  values = c(
-    "Bronx"     = "#D09A3A",
-    "Brooklyn"  = "#008C7A",
-    "Manhattan" = "#176B5B",
-    "Queens"    = "#42BFA5" )
-  ) +
-  labs(
-    title = "Top 10 Stations by Average Hourly Ridership",
-    x = "Station",
-    y = "Mean Ridership per Station",
-    fill = "Borough"
-  ) +
-  theme_mygraphs()
-```
 
 ```{r Line-graph-daily-ridership-24-hr}
 project <- project %>%
@@ -369,6 +337,10 @@ scale_color_manual(
   )
 ```
 
+Weekdays (Sept 16-20) display a pronounced bimodal commuting profile, characterized by a sharp morning rush peak at 08:00 AM (~400,000 riders) and an evening peak at 05:00 PM (>420,000 riders). Morning Peak: A steep climb from ~15,000 riders at 03:00 AM to a sharp peak between 300,000 and 420,000 riders at 08:00 AM. Midday Trough: A drop to ~150,000 riders around 11:00 AM–12:00 PM. Evening Peak: A second, even larger surge peaking between 350,000 and 430,000 riders at 05:00 PM (17:00). Late Night: Drops near zero (~10,000-20,000 riders) between 01:00 AM and 04:00 AM. In contrast, weekend curves (Sept 15 & Sept 21) exhibit smooth, flattened arcs peaking gently near ~200,000 riders at 04:00 PM.
+
+The severe dip between rush-hour peaks and midday/overnight hours establishes the definition for commute (Weekday 5:00 AM-10:59 AM and 4:00 PM-8:59 PM). This directly motivated our future Two-Sample t-test. 
+
 ```{r Boxplot-graph-system-ridership-by-hour}
 ggplot(
   daily_hourly_ridership,
@@ -401,43 +373,9 @@ ggplot(
   )
 ```
 
+Peak commuting hours (07:00-08:00 AM and 04:00-06:00 PM) exhibit tall Interquartile Range (IQR) boxes stretching from ~200,000 to >400,000 riders, alongside extended upper whiskers. This high dispersion stems from combining high-volume weekdays with lower-volume weekend days within the same hourly bin. Midday Hours (11:00 AM-01:00 PM): Display much shorter, compact boxes positioned around ~150,000 riders. Where late-night hours (01:00 AM-04:00 AM) feature flattened, compressed IQRs near zero.
 
-```{r Line-graph-average-ridership-24-hr}
-#System ridership for each hour across all days (weekend + weekday)
-average_hourly_ridership <- daily_hourly_ridership %>%
-  group_by(hour) %>%
-  summarize(
-    mean_ridership = mean(total_ridership, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-#Line plot
-ggplot(
-  average_hourly_ridership,
-  aes(x = hour, y = mean_ridership)
-) +
-  geom_line(color = "#176B5B", linewidth = 1.3) +
-  geom_point(color = "#176B5B", size = 1.5) +
-  scale_x_continuous(
-    breaks = 0:23,
-    labels = sprintf("%02d:00", 0:23)
-  ) +
-  scale_y_continuous(labels = scales::comma) +
-  labs(
-    title = "Average NYC Subway Ridership by Hour",
-    x = "Hour of Day",
-    y = "Average Total System Ridership"
-  ) +
-  theme_mygraphs()+ 
-  theme(
-    axis.text.x = element_text(
-      angle = 45,
-      hjust = 1,
-      vjust = 1,
-      size = 9
-    )
-  )
-```
+The non-uniform variance across hours motivates the future One-Way ANOVA across time periods analysis.
 
 **Weekday and Weekend Comparisons**
 ```{r Line-graph-weekday-weekend-average-ridership}
@@ -496,6 +434,8 @@ ggplot(
 
 ```
 
+The weekday line rises rapidly from ~10,000 at 03:00 AM to a morning peak of ~390,000 riders at 08:00 AM, dips to ~150,000 at midday, and reaches its maximum peak of ~410,000 riders at 05:00 PM (17:00). The weekend line climbs gradually from ~10,000 at 03:00 AM to a broad, flat plateau of ~200,000 riders between 03:00 PM and 05:00 PM, before gently tapering off.
+
 ```{r Boxplot-weekday-weekend}
 
 system_hourly_day <- project %>%
@@ -524,6 +464,10 @@ ggplot(system_hourly_day,
   )
 
 ```
+
+The weekday box is tall and wide, with an IQR spanning from ~65,000 to ~270,000 riders/hr, a solid horizontal median line at ~155,000 riders/hr, and an upper whisker reaching all the way to ~440,000 riders/hr. On the other hand, the weekend box is substantially shorter and lower, with an IQR spanning from ~45,000 to ~160,000 riders/hr, a median at ~100,000 riders/hr, and an upper whisker topping out near ~220,000 riders/hr.
+
+These two graphs grounded the Two-Sample Weekday vs. Weekend t-test.
 
 **Geographic Differences in Ridership**
 ```{r Hourly-ridership-borough}
@@ -575,6 +519,10 @@ ggplot(borough_hourly,
 
 ```
 
+Manhattan drives the vast majority of the 05:00 PM system peak (~240,000 riders/hr) and illustrates a morning peak at 08:00 AM (~125,000 riders/hr). Brooklyn follows second at ~90,000 riders/hr at 08:00 AM and ~60,000 at 05:00 PM. Queens peaks at ~60,000 riders/hr at 08:00 AM and hovers around ~35,000 at 05:00 PM. The Bronx is the lowest curve throughout, peaking at ~32,000 riders/hr at 08:00 AM.
+
+From this graph we can see that while outer boroughs see some morning outbound peaks as residents head to work, Manhattan generates the majority of the system's evening surge as commuters and visitors enter Manhattan turnstiles to head home
+
 **Bus-to-Subway Transfers**
 ```{r Ridership-transfer-relationship}
 scatter <- project %>%
@@ -599,10 +547,11 @@ scatter <- project %>%
 scatter
 ```
 
-Summary Statistics Ridership Transfers 
-Station ridership 
-Station transfers
-```{r Summary-statistics-ridership-transfers}
+Queens takes the crown in intermodal bus-to-subway transfers, generating a morning transfer spike of ~48,000 transfers at 07:00-08:00 AM. Regression analysis reveals that Queens has the steepest transfer-to-ridership slope (~600 transfers per 5,000 riders), whereas Manhattan's slope remains virtually flat (~120 transfers per 14,000 riders).
+
+**Summary Statistics Station Ridership**
+
+```{r Summary-statistics-ridership}
 #Station ridership
 project %>%
   summarize(
@@ -612,7 +561,13 @@ project %>%
     minimum = min(ridership, na.rm = TRUE),
     maximum = max(ridership, na.rm = TRUE)
   )
+```
 
+With the Median of 10 riders/hour and IQR of 27 riders/hour, this means that half of all station-hour observations across the entire MTA network log 10 or fewer passenger entries per hour, so the middle 50% of all station-hour logs fall between 3 and 30 riders. The standard deviation (187.44) is over 18 times larger than the median (10). This massive spread confirms a right-skewed, heavy-tailed distribution. A vast majority of outer-borough neighborhood stations experience not very high entry volumes, while a small handful of massive Manhattan transit hubs handle very high passenger surges during commute hours.
+
+**Summary Statistics Station Transfers**
+
+```{r Summary-statistics-transfers}
 #Station transfers
 project %>%
   summarize(
@@ -623,6 +578,17 @@ project %>%
     maximum = max(transfers, na.rm = TRUE)
   )
 ```
+
+The striking numbers here are that the Median is 0 transfers/hour and as such the IQR is 0 transfers/hour, so at least 75% of all station-hour records in the entire system record exactly 0 bus-to-subway transfers. However, despite a median of zero, the maximum reaches 1,350 transfers in a single hour
+
+
+Based on the preliminary EDA visual and descriptive metrics, the initial answers to the study's core research questions can be summarized prior to formal hypothesis testing:
+
+1. Temporal Patterns: Subway demand is structured by work-week routines, exhibiting a strong bimodal weekday commute profile that collapses on weekends into a low-volume, unimodal curve.
+
+2. Geographic Distribution: Manhattan functions as the network's volume hub, handling over twice the daily entry volume of any outer borough.
+
+3. Infrastructure Focus: While Manhattan leads in total passenger count, Queens functions as the primary intermodal connection hub.
 
 # Analysis and Interpretation
 
