@@ -15,8 +15,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r Visual-scheme, include=FALSE}
-
+```{r Visual Scheme, include=FALSE}
 my_colors <- c(
   "Dark teal"   = "#176B5B",
   "Teal"        = "#008C7A",
@@ -90,9 +89,9 @@ New York City has the largest subway system in the United States, and it serves 
 This exploration and analysis specifically examines New York City's subway ridership in Manhattan, Brooklyn, the Bronx, and Queens during the week of September 15-21, 2024. This specific week was chosen because we felt it was likely going to be the best representation of a relatively normal week, meaning there are no holidays, school is in session, and it is not off season.
 
 Specifically, we proposed the following three questions: 
-“How do NYC subway ridership volumes vary throughout the day?”
-"Which hours have the highest ridership average (weekdays vs. weekends)?"
-"Do these hours correspond to commuting periods?"
+- “How do NYC subway ridership volumes vary throughout the day?”
+- "Which hours have the highest ridership average (weekdays vs. weekends)?"
+- "Do these hours correspond to commuting periods?"
 
 ```{r Read in packages and data, message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -114,7 +113,7 @@ Data cleaned to remove duplication and uses on partner agencies (PATH, etc).
 
 Time-late data due to malfunctioning hardware is incorporated as made available.
 
-## Main Variables of Analysis
+**Main Variables of Analysis**
 
 These are the following main variables of analysis that we will be using from the original MTA dataset.
 
@@ -153,9 +152,8 @@ sum(project$transfers < 0, na.rm = TRUE)
 
 ```
 
-## Created Variables of Analysis
-
 ```{r Data Formatting}
+## Created Variables of Analysis
 # Add 24-hour time column
 project <- project %>%
   mutate(
@@ -201,8 +199,6 @@ project$day_type <- as.factor(project$day_type)
 project$commute_type <- as.factor(project$commute_type)
 ```
 
-
-
 # Exploratory Data Analysis
 
 Three main analytic goals, to identify patterns across: 
@@ -214,10 +210,8 @@ Days : Weekday/Weekend comparison, commuting periods
 Geography : Ridership by borough and high bus-to-subway transfers
 
 
-## Descriptive Statistics
-
-
-```{r Descriptive-statistics}
+**Descriptive Statistics**
+```{r Descriptive Statistics}
 xkablesummary (project, title = "Summary Statistics for Project")
 
 max_value_ridership <- project %>%
@@ -225,7 +219,6 @@ max_value_ridership <- project %>%
 ```
 
 This dataset contains 553,429 station-hour records across 424 station complexes in the four boroughs. The core numerical metrics evaluated are total ridership (station entries) and transfers (intermodal bus-to-subway entries, which represent a sub-category contained within total ridership). The maximum value of ridership is one to point out reaching 14012 taps, within one hour at one station, with a minimum of 1 a very striking spread.
-
 
 ```{r Observations-by-day}
 with_timestamp <- project %>%
@@ -258,8 +251,7 @@ The number of observations recorded on each date was also examined to assess con
 
 This confirms balanced, uninterrupted data recording across all 168 temporal hours of the study window.
 
-## Overall Patterns in Subway Ridership
-
+**Overall Patterns in Subway Ridership**
 ```{r}
 # Week average for total ridership by borough
 borough_ridership_means <- project %>%
@@ -288,7 +280,6 @@ station_ridership_means
 Out of the top 10 stations for mean hourly ridership, 7 of them are in Manhattan, 2 of them are in Queens, and 1 of them is in Brooklyn.
 
 ```{r Bar-chart-top-10-busiest-stations}
-
 top_stations <- project %>%
   group_by(station_complex, station_complex_id, borough) %>%
   summarize(
@@ -318,10 +309,7 @@ ggplot(top_stations,
   theme_mygraphs()
 ```
 
-
-
 ```{r Line-graph-daily-ridership-24-hr}
-
 project <- project %>%
   mutate(
     timestamp = mdy_hms(transit_timestamp),
@@ -379,11 +367,9 @@ scale_color_manual(
       size = 9
     )
   )
-
 ```
 
 ```{r Boxplot-graph-system-ridership-by-hour}
-
 ggplot(
   daily_hourly_ridership,
   aes(x = factor(hour), y = total_ridership)
@@ -413,12 +399,10 @@ ggplot(
       size = 9
     )
   )
-
 ```
 
 
 ```{r Line-graph-average-ridership-24-hr}
-
 #System ridership for each hour across all days (weekend + weekday)
 average_hourly_ridership <- daily_hourly_ridership %>%
   group_by(hour) %>%
@@ -456,7 +440,6 @@ ggplot(
 ```
 
 ## Weekday and Weekend Comparisons
-
 ```{r Line-graph-weekday-weekend-average-ridership}
 #Sum ridership, then group for type of day, then average of every hour of those groups
 average_by_day_type <- project %>%
@@ -542,7 +525,7 @@ ggplot(system_hourly_day,
 
 ```
 
-## Geographic Differences in Ridership
+**Geographic Differences in Ridership**
 
 ```{r Hourly-ridership-borough}
 
@@ -593,9 +576,7 @@ ggplot(borough_hourly,
 
 ```
 
-
-## Bus-to-Subway Transfers
-
+**Bus-to-Subway Transfers**
 ```{r Ridership-transfer-relationship}
 scatter <- project %>%
   ggplot(aes(x=ridership, y=transfers, color=borough)) +
@@ -805,8 +786,10 @@ ggplot(hourly_transfers_total, aes(x = hour, y = total_hourly_transfers, color =
   color = "Borough"
 )
 ```
+
 All boroughs demonstrate a higher amount of total bus-to-subway transfers during the morning hours. Queens clearly shows the highest number of total transfers, while Manhattan has a noticeable bimodal distribution, indicating people take the bus to the subway during the morning and evening time periods.
-# Where are the top ten stations for bus transfers?
+
+**Where are the top ten stations for bus transfers?**
 ```{r}
 top_transfer_stations <- project %>%
   group_by(station_complex, borough) %>%
@@ -838,9 +821,10 @@ ggplot(top_transfer_stations, aes(x = reorder(station_complex, total_transfers),
   )
 )
 ```
+
 The top five transfer stations for total number of bus-to-subway transfers are Flushing-Main St (7), Jamaica Center-Parsons/Archer (E,J,Z), Kew Gardens-Union Tpke (E,F), 74-Broadway (7)/Jackson Hts-Roosevelt Av (E,F,M,R), Jamaica-179 St (F), which are all in Queens. Additionally, Flushing-Main St, Jamaica Center-Parsons/Archer, Jamaica-179 St, South Ferry/Whitehall St in Manhattan, and Flatbush Av-Brooklyn College in Brooklyn are the last subway stations on their respective lines, indicating people may take the bus from areas outside of subway map coverage.
 
-# Sum total transfers at top 10 stations for each hour of each day
+**Sum total transfers at top 10 stations for each hour of each day**
 ```{r}
 daily_hourly_top_transfers <- project %>%
   filter(station_complex %in% top_transfer_stations$station_complex) %>%
@@ -884,8 +868,10 @@ scale_color_manual(
   ) +
   theme_mygraphs()
 ```
+
 Of the top 10 stations, bus-to-subway transfers during the morning commute are clear on Monday (Sept. 16) to Thursday (Sept. 19). There is a slight curve on Friday (Sept. 20); however, this line is more similar to the Saturday and Sunday lines (Sept. 21 and 15, respectively). This supports that there are differences in morning commuting hours compared to the same time period during the weekend. Additionally, hybrid jobs may allow employees to work remotely on Fridays more often than Monday through Thursday.
-#Distribution of transfers at top 10 stations by hour
+
+**Distribution of transfers at top 10 stations by hour**
 ```{r}
 hourly_transfers <- project %>%
   semi_join(
@@ -918,8 +904,10 @@ ggplot(hourly_transfers, aes(x = hour, y = mean_transfers, color = factor(statio
     color = "Station Complex"
   )
 ```
+
 Flushing-Main St. Station shows an elevated transfer rate through the day and evening.
-# Weekend vs Weekday Hourly Transfers at All Stations
+
+**Weekend vs Weekday Hourly Transfers at All Stations**
 ```{r}
 hourly_transfers <- project %>%
   mutate(
@@ -967,8 +955,10 @@ ggplot(
   theme_mygraphs()
 
 ```
+
 Similar to the Top 10 Subway Stations comparison, there's a clear difference between weekend and weekday bus-to-subway transfers. Additionally, there is once again a clear increase in the number of people using buses to transfer at subway stations during the morning weekday commute times in comparison to the evening commute times.
-#QQ Plots for Ridership by Borough
+
+**QQ Plots for Ridership by Borough**
 ```{r}
 hourly_transfers_total <- project %>%
   group_by(hour, borough) %>%
@@ -992,9 +982,10 @@ for (b in boroughs) {
 }
 par(mfrow = c(1, 1))
 ```
+
 All boroughs do not have a normal distribution of transfers. There are extreme points in the upper right quadrant in the Bronx, Brooklyn, and Queens, likely indicating an extremely low number of people taking the bus to the subway late in the evening. All boroughs show extreme values in the lower left quadrant, indicating few people take the bus to the subway during the early hours of the day. The step in the middle of the graphs may indicate a steep decrease following the morning commute, followed by a more gradual decrease.
 
-# Hypothesis Testing of Transfers
+**Hypothesis Testing of Transfers**
 Our primary questions of interest regarding transfers are whether there is a normal distribution of bus-to-subway transfers during 1) commuting periods vs non-commuting periods and 2) during weekdays vs weekends. Additionally, are transfer amounts the same during commuting periods vs non-commuting periods as well as during the week in comparison to the weekend.
   
 **T-Tests: Commute vs. Non-commute; Weekday vs. Weekend**
@@ -1016,6 +1007,7 @@ qqline(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Comm
 qqnorm(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Non-Commute"])
 qqline(hourly_transfers$total_transfers[hourly_transfers$commute_period == "Non-Commute"], col = "#B84A12", lwd = 2)
 ```
+
 Non-commute transfers have a more normal distribution than transfers during commuting hours, but both time periods have extreme values. 
 
 Weekday vs. Weekend periods:
@@ -1028,10 +1020,10 @@ qqline(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekday"],
 qqnorm(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekend"])
 qqline(hourly_transfers$total_transfers[hourly_transfers$day_type == "Weekend"], col = "#B84A12", lwd = 2)
 ```
+
 Both distributions of transfers during the weekend and weekday are not normal, as evidenced by the extreme values and limited adherence to the Q-Q plot line.
 
-Assumptions for T-Tests:
-For the t-tests evaluating commuting time periods and weekend vs. weekday transfer amounts, we assumed the sample size was large enough to be robust against normality violations. Additionally, the population standard deviation is unknown, ruling out the z-test. While the independent observation assumption may be violated due to time data, the t-test is preferred for this class.
+Assumptions for T-Tests: For the t-tests evaluating commuting time periods and weekend vs. weekday transfer amounts, we assumed the sample size was large enough to be robust against normality violations. Additionally, the population standard deviation is unknown, ruling out the z-test. While the independent observation assumption may be violated due to time data, the t-test is preferred for this class.
   
 ```{r}
 # t-test for commute time vs. non-commute time means
